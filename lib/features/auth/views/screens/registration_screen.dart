@@ -7,6 +7,7 @@ import '../../../../core/common/widgets/app_text_field.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/auth_controller.dart';
 
 class RegistrationScreen extends GetView<AuthController> {
@@ -17,9 +18,9 @@ class RegistrationScreen extends GetView<AuthController> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: SingleChildScrollView(
+          child: ResponsiveCenter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

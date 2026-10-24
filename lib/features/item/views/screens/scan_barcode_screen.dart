@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/scan_barcode_controller.dart';
 
 class ScanBarcodeScreen extends GetView<ScanBarcodeController> {
@@ -17,10 +18,14 @@ class ScanBarcodeScreen extends GetView<ScanBarcodeController> {
       backgroundColor: AppColors.featureTitle,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 69.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -40,7 +45,7 @@ class ScanBarcodeScreen extends GetView<ScanBarcodeController> {
         title: Text(
           'Scan barcode',
           style: getTextStyle(
-            fontSize: 21.9,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -48,7 +53,11 @@ class ScanBarcodeScreen extends GetView<ScanBarcodeController> {
         actions: [
           IconButton(
             onPressed: controller.flipCamera,
-            icon: Icon(Iconsax.refresh_2, color: Colors.white, size: 26.sp),
+            icon: Icon(
+              Iconsax.refresh_2,
+              color: Colors.white,
+              size: AppResponsive.appBarIconSize(context),
+            ),
           ),
         ],
       ),

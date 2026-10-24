@@ -8,6 +8,7 @@ import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/services/business_profile_service.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../../core/utils/helpers/app_helper.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/invoice_controller.dart';
 import '../../widgets/payment_type_badge.dart';
 
@@ -20,10 +21,14 @@ class ReceiptPreviewScreen extends GetView<InvoiceController> {
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -43,7 +48,7 @@ class ReceiptPreviewScreen extends GetView<InvoiceController> {
         title: Text(
           'PDF Preview',
           style: getTextStyle(
-            fontSize: 16.4,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -51,7 +56,11 @@ class ReceiptPreviewScreen extends GetView<InvoiceController> {
         actions: [
           IconButton(
             onPressed: controller.openPrint,
-            icon: Icon(Iconsax.printer, color: Colors.white, size: 26.sp),
+            icon: Icon(
+              Iconsax.printer,
+              color: Colors.white,
+              size: AppResponsive.appBarIconSize(context),
+            ),
           ),
         ],
       ),
@@ -60,9 +69,11 @@ class ReceiptPreviewScreen extends GetView<InvoiceController> {
         child: Obx(
           () => SingleChildScrollView(
             padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+            child: ResponsiveCenter(
+              maxWidth: AppResponsive.maxReceiptWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 Container(
                   padding: EdgeInsets.all(18.w),
                   decoration: BoxDecoration(
@@ -248,7 +259,8 @@ class ReceiptPreviewScreen extends GetView<InvoiceController> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

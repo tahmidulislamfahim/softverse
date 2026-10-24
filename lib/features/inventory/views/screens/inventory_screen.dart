@@ -7,6 +7,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/app_nav_drawer.dart';
 import '../../../../core/common/widgets/floating_icon_button.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../home/widgets/category_tabs.dart';
 import '../../controller/inventory_controller.dart';
 import '../../widgets/inventory_product_row.dart';
@@ -16,12 +17,15 @@ class InventoryScreen extends GetView<InventoryController> {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+    final iconSize = AppResponsive.appBarIconSize(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const AppNavDrawer(),
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 58.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -41,13 +45,13 @@ class InventoryScreen extends GetView<InventoryController> {
         title: Text(
           'Inventory',
           style: getTextStyle(
-            fontSize: 21.9,
+            fontSize: isLand ? 17.0 : 21.9,
             fontWeight: FontWeight.w700,
             color: Colors.white,
           ),
         ),
         actions: [
-          Icon(Iconsax.notification, color: Colors.white, size: 26.sp),
+          Icon(Iconsax.notification, color: Colors.white, size: iconSize),
           SizedBox(width: 16.w),
         ],
       ),
@@ -55,9 +59,11 @@ class InventoryScreen extends GetView<InventoryController> {
         top: false,
         child: Stack(
           children: [
-            Column(
-              children: [
-                SizedBox(height: 16.h),
+            ResponsiveCenter(
+              maxWidth: 900,
+              child: Column(
+                children: [
+                  SizedBox(height: isLand ? 8 : 16.h),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   child: Obx(
@@ -88,7 +94,12 @@ class InventoryScreen extends GetView<InventoryController> {
                               controller.products.isEmpty
                           ? const Center(child: CircularProgressIndicator())
                           : ListView.builder(
-                              padding: EdgeInsets.all(16.w),
+                              padding: EdgeInsets.fromLTRB(
+                                16.w,
+                                16.w,
+                                16.w,
+                                isLand ? 120.0 : 130.h,
+                              ),
                               itemCount: controller.visibleProducts.length,
                               itemBuilder: (context, index) {
                                 final product =
@@ -108,7 +119,8 @@ class InventoryScreen extends GetView<InventoryController> {
                 ),
               ],
             ),
-            Positioned(
+          ),
+          Positioned(
               right: 16.w,
               bottom: 16.h,
               child: Column(

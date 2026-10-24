@@ -7,6 +7,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/common/widgets/product_image.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/edit_customer_controller.dart';
 import '../../widgets/customer_form_field.dart';
 
@@ -15,14 +16,16 @@ class EditCustomerScreen extends GetView<EditCustomerController> {
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = AppResponsive.appBarIconSize(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(Icons.arrow_back, color: Colors.white, size: iconSize),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -51,9 +54,14 @@ class EditCustomerScreen extends GetView<EditCustomerController> {
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          padding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: AppResponsive.isLandscape(context) ? 10.h : 16.h,
+          ),
+          child: ResponsiveCenter(
+            maxWidth: 500,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
                 child: Obx(
@@ -62,12 +70,18 @@ class EditCustomerScreen extends GetView<EditCustomerController> {
                     child: controller.selectedImage.value == null
                         ? ProductImage(
                             imageUrl: controller.customer.imageUrl,
-                            size: 80,
-                            borderRadius: 40,
+                            size: AppResponsive.isLandscape(context) ? 60 : 80,
+                            borderRadius: AppResponsive.isLandscape(context)
+                                ? 30
+                                : 40,
                           )
                         : Container(
-                            width: 80.w,
-                            height: 80.w,
+                            width: AppResponsive.isLandscape(context)
+                                ? 60.0
+                                : 80.0,
+                            height: AppResponsive.isLandscape(context)
+                                ? 60.0
+                                : 80.0,
                             clipBehavior: Clip.antiAlias,
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
@@ -78,7 +92,9 @@ class EditCustomerScreen extends GetView<EditCustomerController> {
                               errorBuilder: (context, error, stackTrace) =>
                                   Icon(
                                     Iconsax.image,
-                                    size: 32.sp,
+                                    size: AppResponsive.isLandscape(context)
+                                        ? 24.sp
+                                        : 32.sp,
                                     color: AppColors.chipInactiveText,
                                   ),
                             ),
@@ -86,7 +102,9 @@ class EditCustomerScreen extends GetView<EditCustomerController> {
                   ),
                 ),
               ),
-              SizedBox(height: 40.h),
+              SizedBox(
+                height: AppResponsive.isLandscape(context) ? 14.h : 28.h,
+              ),
               CustomerFormField(
                 label: 'Name',
                 controller: controller.nameController,
@@ -144,9 +162,11 @@ class EditCustomerScreen extends GetView<EditCustomerController> {
               CustomerFormField(
                 label: 'Note',
                 controller: controller.noteController,
-                maxLines: 5,
+                maxLines: AppResponsive.isLandscape(context) ? 3 : 5,
               ),
-              SizedBox(height: 40.h),
+              SizedBox(
+                height: AppResponsive.isLandscape(context) ? 16.h : 32.h,
+              ),
               Center(
                 child: Obx(
                   () => PrimaryButton(
@@ -158,14 +178,16 @@ class EditCustomerScreen extends GetView<EditCustomerController> {
                       colors: [AppColors.gradientStart, AppColors.gradientEnd],
                     ),
                     textColor: Colors.white,
-                    width: 197.w,
-                    height: 68,
-                    fontSize: 16.4,
+                    width: 180,
+                    height: AppResponsive.isLandscape(context) ? 44.0 : 50.0,
+                    fontSize: 15,
+                    borderRadius: 10,
                   ),
                 ),
               ),
             ],
           ),
+        ),
         ),
       ),
     );

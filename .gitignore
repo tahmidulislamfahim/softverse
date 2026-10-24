@@ -63,3 +63,4 @@ temp_interactive_push.bat
 # Python tooling from an unrelated task, never meant to live in this repo.
 graphify-out/
 requirements.txt
+.agent

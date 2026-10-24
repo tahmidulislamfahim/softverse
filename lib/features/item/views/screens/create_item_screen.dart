@@ -8,6 +8,7 @@ import '../../../../core/common/widgets/app_text_field.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/services/feature_settings.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../inventory/widgets/date_field_row.dart';
 import '../../../inventory/widgets/toggle_field_row.dart';
 import '../../controller/create_item_controller.dart';
@@ -26,10 +27,14 @@ class CreateItemScreen extends GetView<CreateItemController> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 69.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -50,7 +55,7 @@ class CreateItemScreen extends GetView<CreateItemController> {
           () => Text(
             controller.isEditing ? 'Edit item' : 'Create item',
             style: getTextStyle(
-              fontSize: 21.9,
+              fontSize: AppResponsive.appBarTitleSize(context),
               fontWeight: FontWeight.w500,
               color: Colors.white,
             ),
@@ -64,9 +69,14 @@ class CreateItemScreen extends GetView<CreateItemController> {
             return const Center(child: CircularProgressIndicator());
           }
           return SingleChildScrollView(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            padding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: AppResponsive.isLandscape(context) ? 10.h : 16.h,
+            ),
+            child: ResponsiveCenter(
+              maxWidth: 560,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AppTextField(
                   controller: controller.nameController,
@@ -92,12 +102,12 @@ class CreateItemScreen extends GetView<CreateItemController> {
                 GestureDetector(
                   onTap: controller.openCategoryPicker,
                   child: Container(
-                    height: 60.h,
+                    height: AppResponsive.isLandscape(context) ? 46.0 : 54.0,
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     decoration: BoxDecoration(
                       color: AppColors.chipBackground,
                       border: Border.all(color: AppColors.cardBorder),
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -428,14 +438,15 @@ class CreateItemScreen extends GetView<CreateItemController> {
                       ),
                       textColor: Colors.white,
                       width: 197.w,
-                      height: 68,
+                      height: AppResponsive.isLandscape(context) ? 48 : 56,
                       fontSize: 16.4,
                     ),
                   ),
                 ),
               ],
             ),
-          );
+          ),
+        );
         }),
       ),
     );

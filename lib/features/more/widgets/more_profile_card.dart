@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../core/common/styles/global_text_style.dart';
 import '../../../core/utils/constants/colors.dart';
+import '../../../core/utils/responsive.dart';
 
 class MoreProfileCard extends StatelessWidget {
   final String name;
@@ -19,8 +20,14 @@ class MoreProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+    final avatarSize = isLand ? 46.0 : 54.0;
+
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.w,
+        vertical: isLand ? 10.h : 14.h,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.cardBorder),
@@ -39,8 +46,8 @@ class MoreProfileCard extends StatelessWidget {
         children: [
           // Initials instead of a stock photo of a stranger.
           Container(
-            width: 60.w,
-            height: 60.w,
+            width: avatarSize,
+            height: avatarSize,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -49,7 +56,7 @@ class MoreProfileCard extends StatelessWidget {
             child: Text(
               _initials(name),
               style: getTextStyle(
-                fontSize: 21.9,
+                fontSize: isLand ? 18.0 : 21.0,
                 fontWeight: FontWeight.w700,
                 color: AppColors.onboardingBackground,
               ),

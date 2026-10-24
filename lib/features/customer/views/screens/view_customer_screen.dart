@@ -7,6 +7,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/product_image.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../../core/utils/helpers/app_helper.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/customer_controller.dart';
 import '../../models/customer_model.dart';
 import '../../widgets/customer_detail_row.dart';
@@ -16,6 +17,8 @@ class ViewCustomerScreen extends GetView<CustomerController> {
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = AppResponsive.appBarIconSize(context);
+
     return Obx(() {
       final customers = controller.customers;
       final customer = controller.customer.value;
@@ -27,10 +30,10 @@ class ViewCustomerScreen extends GetView<CustomerController> {
         backgroundColor: Colors.white,
         appBar: AppBar(
           centerTitle: false,
-          toolbarHeight: 55.h,
+          toolbarHeight: AppResponsive.appBarHeight(context),
           leading: IconButton(
             onPressed: showDetails ? controller.showList : Get.back,
-            icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+            icon: Icon(Icons.arrow_back, color: Colors.white, size: iconSize),
           ),
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
@@ -63,23 +66,25 @@ class ViewCustomerScreen extends GetView<CustomerController> {
             if (showDetails)
               IconButton(
                 onPressed: controller.openEdit,
-                icon: Icon(Iconsax.edit_2, color: Colors.white, size: 26.sp),
+                icon: Icon(Iconsax.edit_2, color: Colors.white, size: iconSize),
               )
             else
               IconButton(
                 onPressed: controller.openAddCustomer,
-                icon: Icon(Iconsax.user_add, color: Colors.white, size: 26.sp),
+                icon: Icon(Iconsax.user_add, color: Colors.white, size: iconSize),
               ),
           ],
         ),
         body: SafeArea(
           top: false,
-          child: showDetails
-              ? RefreshIndicator(
-                  onRefresh: controller.fetchCustomers,
-                  child: _CustomerDetails(customer: customer),
-                )
-              : Column(
+          child: ResponsiveCenter(
+            maxWidth: 600,
+            child: showDetails
+                ? RefreshIndicator(
+                    onRefresh: controller.fetchCustomers,
+                    child: _CustomerDetails(customer: customer),
+                  )
+                : Column(
                   children: [
                     Padding(
                       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
@@ -152,6 +157,7 @@ class ViewCustomerScreen extends GetView<CustomerController> {
                     ),
                   ],
                 ),
+            ),
         ),
       );
     });

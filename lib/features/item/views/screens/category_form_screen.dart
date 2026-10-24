@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../controller/category_controller.dart';
 import '../../widgets/color_shape_picker.dart';
 
@@ -12,8 +13,10 @@ class CategoryFormScreen extends GetView<CategoryFormController> {
     appBar: AppBar(
       title: Text(controller.isEditing ? 'Edit Category' : 'Create Category'),
     ),
-    body: ListView(
-      padding: const EdgeInsets.all(16),
+    body: ResponsiveCenter(
+      maxWidth: 600,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
       children: [
         TextField(
           controller: controller.nameController,
@@ -74,5 +77,6 @@ class CategoryFormScreen extends GetView<CategoryFormController> {
         ),
       ],
     ),
-  );
+  ),
+);
 }

@@ -7,6 +7,7 @@ import '../../../../core/common/widgets/app_nav_drawer.dart';
 import '../../../../core/common/widgets/floating_icon_button.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../customer/controller/customer_controller.dart';
 import '../../controller/checkout_controller.dart';
 import '../../widgets/bill_summary_card.dart';
@@ -22,12 +23,15 @@ class CheckoutScreen extends GetView<CheckoutController> {
   @override
   Widget build(BuildContext context) {
     final customerController = Get.find<CustomerController>();
+    final isDualPane = AppResponsive.isDualPane(context);
+    final iconSize = AppResponsive.appBarIconSize(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const AppNavDrawer(),
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 58.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -48,7 +52,7 @@ class CheckoutScreen extends GetView<CheckoutController> {
           () => Text(
             controller.orderId,
             style: getTextStyle(
-              fontSize: 16.4,
+              fontSize: isDualPane ? 15.0 : 16.4,
               fontWeight: FontWeight.w500,
               color: Colors.white,
             ),
@@ -57,17 +61,17 @@ class CheckoutScreen extends GetView<CheckoutController> {
         actions: [
           IconButton(
             onPressed: controller.closeCheckout,
-            icon: Icon(Iconsax.close_circle, color: Colors.white, size: 26.sp),
+            icon: Icon(Iconsax.close_circle, color: Colors.white, size: iconSize),
           ),
           IconButton(
             onPressed: controller.openPendingOrders,
-            icon: Icon(Iconsax.clock, color: Colors.white, size: 26.sp),
+            icon: Icon(Iconsax.clock, color: Colors.white, size: iconSize),
           ),
-          SizedBox(width: 15.w),
-          Icon(Iconsax.notification, color: Colors.white, size: 26.sp),
+          SizedBox(width: isDualPane ? 8 : 15.w),
+          Icon(Iconsax.notification, color: Colors.white, size: iconSize),
           IconButton(
             onPressed: controller.printEstimate,
-            icon: Icon(Iconsax.printer, color: Colors.white, size: 26.sp),
+            icon: Icon(Iconsax.printer, color: Colors.white, size: iconSize),
             tooltip: 'Print estimate',
           ),
           SizedBox(width: 6.w),
@@ -77,225 +81,73 @@ class CheckoutScreen extends GetView<CheckoutController> {
         top: false,
         child: Stack(
           children: [
-            Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 55.h,
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.chipBackground,
-                            border: Border.all(color: AppColors.cardBorder),
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Obx(() {
-                            final customers = customerController.customers;
-                            final selectedId =
-                                customers.any(
-                                  (customer) =>
-                                      customer.id ==
-                                      controller.selectedCustomerId.value,
-                                )
-                                ? controller.selectedCustomerId.value
-                                : '';
-                            final fallbackName =
-                                controller.customerName.value.trim().isEmpty
-                                ? 'Not Registered'
-                                : controller.customerName.value.trim();
-                            return DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: selectedId,
-                                isExpanded: true,
-                                icon: Icon(
-                                  Iconsax.arrow_down,
-                                  size: 22.sp,
-                                  color: AppColors.chipInactiveText,
-                                ),
-                                borderRadius: BorderRadius.circular(12.r),
-                                dropdownColor: Colors.white,
-                                style: getTextStyle(
-                                  fontSize: 16.4,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.chipInactiveText,
-                                ),
-                                items: [
-                                  DropdownMenuItem(
-                                    value: '',
-                                    child: Text(fallbackName),
-                                  ),
-                                  ...customers.map(
-                                    (customer) => DropdownMenuItem(
-                                      value: customer.id,
-                                      child: Text(
-                                        customer.name.trim().isEmpty
-                                            ? 'Unnamed Customer'
-                                            : customer.name.trim(),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                onTap: controller.loadCustomers,
-                                onChanged: controller.selectCustomerById,
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      GestureDetector(
-                        onTap: controller.addCustomer,
-                        child: Container(
-                          width: 55.w,
-                          height: 55.w,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.r),
-                            gradient: const LinearGradient(
-                              colors: [
-                                AppColors.gradientStart,
-                                AppColors.gradientEnd,
-                              ],
-                            ),
-                          ),
-                          child: Icon(
-                            Iconsax.user_add,
-                            color: Colors.white,
-                            size: 26.sp,
+            if (isDualPane)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 6,
+                      child: RefreshIndicator(
+                        onRefresh: controller.forceSync,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildCustomerSelector(customerController, isDualPane),
+                              const SizedBox(height: 12),
+                              _buildPurchaseItems(),
+                              const SizedBox(height: 32),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 5,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildBillAndPayments(),
+                            const SizedBox(height: 120),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: controller.forceSync,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Purchase Item',
-                            style: getTextStyle(
-                              fontSize: 16.4,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.authTextDark,
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Obx(
-                            () => Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                for (
-                                  var i = 0;
-                                  i < controller.cartItems.length;
-                                  i++
-                                ) ...[
-                                  CartItemCard(
-                                    item: controller.cartItems[i],
-                                    onIncrement: () =>
-                                        controller.incrementQuantity(i),
-                                    onDecrement: () =>
-                                        controller.decrementQuantity(i),
-                                  ),
-                                  if (i == 0) ...[
-                                    SizedBox(height: 12.h),
-                                    ModifierDiscountToggle(
-                                      mode:
-                                          controller.priceAdjustmentMode.value,
-                                      onModifierTap: controller.selectModifier,
-                                      onDiscountTap: controller.selectDiscount,
-                                    ),
-                                  ],
-                                  SizedBox(height: 22.h),
-                                ],
-                              ],
-                            ),
-                          ),
-                          Obx(() {
-                            final points = controller.availablePoints;
-                            if (points <= 0) return const SizedBox.shrink();
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: 16.h),
-                              child: LoyaltyPointsTile(
-                                availablePoints: points,
-                                isUsing: controller.pointsToUse.value > 0,
-                                usedValue: controller.loyaltyDiscount,
-                                onToggle: controller.toggleUsePoints,
-                              ),
-                            );
-                          }),
-                          Text(
-                            'Bill Amounts',
-                            style: getTextStyle(
-                              fontSize: 16.4,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.authTextDark,
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Obx(
-                            () => BillSummaryCard(
-                              subtotal: controller.subtotal,
-                              discount: controller.discountAmount,
-                              discountLabel:
-                                  controller.appliedDiscount.value?.name,
-                              loyaltyDiscount: controller.loyaltyDiscount,
-                              tax: controller.tax,
-                              taxRate: controller.taxRate,
-                              totalAmount: controller.totalAmount,
-                              amountReceivedController:
-                                  controller.amountReceivedController,
-                              changeToReturn: controller.changeToReturn,
-                              onAmountReceivedChanged:
-                                  controller.setAmountReceived,
-                            ),
-                          ),
-                          SizedBox(height: 22.h),
-                          Obx(
-                            () => CheckoutActionButtons(
-                              onSendToTable: controller.sendToTable,
-                              onSaveOrder: controller.saveOrder,
-                              onClearOrder: controller.discardActiveOrder,
-                              showSaveOrder: controller.isOpenOrderEnabled,
-                              showSendToTable: controller.isTableOptionsEnabled,
-                            ),
-                          ),
-                          SizedBox(height: 22.h),
-                          Text(
-                            'Payment Method',
-                            style: getTextStyle(
-                              fontSize: 16.4,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.authTextDark,
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Obx(() {
-                            final methods = controller.visiblePaymentMethods;
-                            return PaymentMethodGrid(
-                              methods: methods,
-                              selectedKey:
-                                  controller.selectedPaymentMethod.value,
-                              onSelected: controller.selectPaymentMethod,
-                            );
-                          }),
-                          SizedBox(height: 16.h),
-                        ],
+              )
+            else
+              Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
+                    child: _buildCustomerSelector(customerController, false),
+                  ),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: controller.forceSync,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildPurchaseItems(),
+                            SizedBox(height: 16.h),
+                            _buildBillAndPayments(),
+                            SizedBox(height: 120.h),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             Positioned(
               right: 16.w,
               bottom: 16.h,
@@ -322,6 +174,257 @@ class CheckoutScreen extends GetView<CheckoutController> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCustomerSelector(CustomerController customerController, bool isDualPane) {
+    final selectorHeight = isDualPane ? 46.0 : 55.h;
+    final btnSize = isDualPane ? 46.0 : 55.w;
+    final iconSize = isDualPane ? 22.0 : 26.sp;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: selectorHeight,
+            padding: EdgeInsets.symmetric(horizontal: isDualPane ? 12 : 16.w),
+            decoration: BoxDecoration(
+              color: AppColors.chipBackground,
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Obx(() {
+              final customers = customerController.customers;
+              final selectedId =
+                  customers.any(
+                    (customer) =>
+                        customer.id ==
+                        controller.selectedCustomerId.value,
+                  )
+                  ? controller.selectedCustomerId.value
+                  : '';
+              final fallbackName =
+                  controller.customerName.value.trim().isEmpty
+                  ? 'Not Registered'
+                  : controller.customerName.value.trim();
+              return DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: selectedId,
+                  isExpanded: true,
+                  icon: Icon(
+                    Iconsax.arrow_down,
+                    size: isDualPane ? 18 : 22.sp,
+                    color: AppColors.chipInactiveText,
+                  ),
+                  borderRadius: BorderRadius.circular(12.r),
+                  dropdownColor: Colors.white,
+                  style: getTextStyle(
+                    fontSize: isDualPane ? 14.5 : 16.4,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.chipInactiveText,
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                      value: '',
+                      child: Text(fallbackName),
+                    ),
+                    ...customers.map(
+                      (customer) => DropdownMenuItem(
+                        value: customer.id,
+                        child: Text(
+                          customer.name.trim().isEmpty
+                              ? 'Unnamed Customer'
+                              : customer.name.trim(),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                  onTap: controller.loadCustomers,
+                  onChanged: controller.selectCustomerById,
+                ),
+              );
+            }),
+          ),
+        ),
+        SizedBox(width: isDualPane ? 10 : 12.w),
+        GestureDetector(
+          onTap: controller.addCustomer,
+          child: Container(
+            width: btnSize,
+            height: btnSize,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12.r),
+              gradient: const LinearGradient(
+                colors: [
+                  AppColors.gradientStart,
+                  AppColors.gradientEnd,
+                ],
+              ),
+            ),
+            child: Icon(
+              Iconsax.user_add,
+              color: Colors.white,
+              size: iconSize,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPurchaseItems() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Purchase Item',
+              style: getTextStyle(
+                fontSize: 16.4,
+                fontWeight: FontWeight.w500,
+                color: AppColors.authTextDark,
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Iconsax.search_normal,
+                    size: 20,
+                    color: AppColors.onboardingBackground,
+                  ),
+                  tooltip: 'Search products',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: controller.openSearch,
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Iconsax.scan,
+                    size: 20,
+                    color: AppColors.onboardingBackground,
+                  ),
+                  tooltip: 'Scan item barcode',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: controller.openScan,
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Obx(
+          () => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (
+                var i = 0;
+                i < controller.cartItems.length;
+                i++
+              ) ...[
+                CartItemCard(
+                  item: controller.cartItems[i],
+                  onIncrement: () =>
+                      controller.incrementQuantity(i),
+                  onDecrement: () =>
+                      controller.decrementQuantity(i),
+                ),
+                if (i == 0) ...[
+                  SizedBox(height: 12.h),
+                  ModifierDiscountToggle(
+                    mode:
+                        controller.priceAdjustmentMode.value,
+                    onModifierTap: controller.selectModifier,
+                    onDiscountTap: controller.selectDiscount,
+                  ),
+                ],
+                SizedBox(height: 22.h),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBillAndPayments() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Obx(() {
+          final points = controller.availablePoints;
+          if (points <= 0) return const SizedBox.shrink();
+          return Padding(
+            padding: EdgeInsets.only(bottom: 16.h),
+            child: LoyaltyPointsTile(
+              availablePoints: points,
+              isUsing: controller.pointsToUse.value > 0,
+              usedValue: controller.loyaltyDiscount,
+              onToggle: controller.toggleUsePoints,
+            ),
+          );
+        }),
+        Text(
+          'Bill Amounts',
+          style: getTextStyle(
+            fontSize: 16.4,
+            fontWeight: FontWeight.w500,
+            color: AppColors.authTextDark,
+          ),
+        ),
+        SizedBox(height: 12.h),
+        Obx(
+          () => BillSummaryCard(
+            subtotal: controller.subtotal,
+            discount: controller.discountAmount,
+            discountLabel:
+                controller.appliedDiscount.value?.name,
+            loyaltyDiscount: controller.loyaltyDiscount,
+            tax: controller.tax,
+            taxRate: controller.taxRate,
+            totalAmount: controller.totalAmount,
+            amountReceivedController:
+                controller.amountReceivedController,
+            changeToReturn: controller.changeToReturn,
+            onAmountReceivedChanged:
+                controller.setAmountReceived,
+          ),
+        ),
+        SizedBox(height: 22.h),
+        Obx(
+          () => CheckoutActionButtons(
+            onSendToTable: controller.sendToTable,
+            onSaveOrder: controller.saveOrder,
+            onClearOrder: controller.discardActiveOrder,
+            showSaveOrder: controller.isOpenOrderEnabled,
+            showSendToTable: controller.isTableOptionsEnabled,
+          ),
+        ),
+        SizedBox(height: 22.h),
+        Text(
+          'Payment Method',
+          style: getTextStyle(
+            fontSize: 16.4,
+            fontWeight: FontWeight.w500,
+            color: AppColors.authTextDark,
+          ),
+        ),
+        SizedBox(height: 12.h),
+        Obx(() {
+          final methods = controller.visiblePaymentMethods;
+          return PaymentMethodGrid(
+            methods: methods,
+            selectedKey:
+                controller.selectedPaymentMethod.value,
+            onSelected: controller.selectPaymentMethod,
+          );
+        }),
+        SizedBox(height: 16.h),
+      ],
     );
   }
 }

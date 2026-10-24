@@ -7,6 +7,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/app_nav_drawer.dart';
 import '../../../../core/common/widgets/app_text_field.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/transaction_controller.dart';
 import '../../widgets/transaction_card.dart';
 
@@ -15,12 +16,14 @@ class TransactionScreen extends GetView<TransactionController> {
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = AppResponsive.appBarIconSize(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const AppNavDrawer(),
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -61,7 +64,7 @@ class TransactionScreen extends GetView<TransactionController> {
         actions: [
           IconButton(
             onPressed: controller.openNotifications,
-            icon: Icon(Iconsax.notification, color: Colors.white, size: 26.sp),
+            icon: Icon(Iconsax.notification, color: Colors.white, size: iconSize),
           ),
         ],
       ),
@@ -72,8 +75,10 @@ class TransactionScreen extends GetView<TransactionController> {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: ResponsiveCenter(
+              maxWidth: 800,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
                   'All Transactions',
@@ -145,6 +150,7 @@ class TransactionScreen extends GetView<TransactionController> {
                 }),
               ],
             ),
+          ),
           ),
         ),
       ),

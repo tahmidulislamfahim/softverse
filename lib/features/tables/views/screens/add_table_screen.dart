@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/add_table_controller.dart';
 
 class AddTableScreen extends GetView<AddTableController> {
@@ -17,10 +18,14 @@ class AddTableScreen extends GetView<AddTableController> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 58.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -40,7 +45,7 @@ class AddTableScreen extends GetView<AddTableController> {
         title: Text(
           'Tables',
           style: getTextStyle(
-            fontSize: 21.9,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -50,8 +55,10 @@ class AddTableScreen extends GetView<AddTableController> {
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ResponsiveCenter(
+            maxWidth: 480,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _Field(
                 controller: controller.nameController,
@@ -68,7 +75,7 @@ class AddTableScreen extends GetView<AddTableController> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
-              SizedBox(height: 28.h),
+              SizedBox(height: 20.h),
               Obx(
                 () => PrimaryButton(
                   label: 'Add Table',
@@ -78,9 +85,9 @@ class AddTableScreen extends GetView<AddTableController> {
                     colors: [AppColors.gradientStart, AppColors.gradientEnd],
                   ),
                   textColor: Colors.white,
-                  height: 56,
-                  borderRadius: 12,
-                  fontSize: 16.4,
+                  height: AppResponsive.isLandscape(context) ? 44.0 : 50.0,
+                  borderRadius: 10,
+                  fontSize: 15,
                 ),
               ),
               SizedBox(height: 28.h),
@@ -189,6 +196,7 @@ class AddTableScreen extends GetView<AddTableController> {
           ),
         ),
       ),
+    ),
     );
   }
 }

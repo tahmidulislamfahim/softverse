@@ -6,6 +6,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../../core/utils/helpers/app_helper.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../inventory/widgets/toggle_field_row.dart';
 import '../../controller/printer_controller.dart';
 import '../../models/printer_model.dart';
@@ -27,10 +28,14 @@ class PrinterDetailScreen extends GetView<PrinterController> {
         backgroundColor: Colors.white,
         appBar: AppBar(
           centerTitle: false,
-          toolbarHeight: 55.h,
+          toolbarHeight: AppResponsive.appBarHeight(context),
           leading: IconButton(
             onPressed: Get.back,
-            icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+            icon: Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+              size: AppResponsive.appBarIconSize(context),
+            ),
           ),
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
@@ -50,7 +55,7 @@ class PrinterDetailScreen extends GetView<PrinterController> {
           title: Text(
             printer?.printerModel ?? 'Printer',
             style: getTextStyle(
-              fontSize: 16.4,
+              fontSize: AppResponsive.appBarTitleSize(context),
               fontWeight: FontWeight.w500,
               color: Colors.white,
             ),
@@ -61,46 +66,61 @@ class PrinterDetailScreen extends GetView<PrinterController> {
           child: printer == null
               ? const SizedBox.shrink()
               : SingleChildScrollView(
-                  padding: EdgeInsets.all(16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: Icon(
-                          Iconsax.printer,
-                          size: 80.sp,
-                          color: AppColors.onboardingBackground,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: AppResponsive.isLandscape(context) ? 10.h : 16.h,
+                  ),
+                  child: ResponsiveCenter(
+                    maxWidth: 520,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Icon(
+                            Iconsax.printer,
+                            size: AppResponsive.isLandscape(context)
+                                ? 46.0
+                                : 70.0,
+                            color: AppColors.onboardingBackground,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 8.h),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 8.w,
-                            height: 8.w,
-                            decoration: BoxDecoration(
-                              color: printer.isConnected || printer.isVirtual
-                                  ? AppColors.stockBadgeText
-                                  : AppColors.chipInactiveText,
-                              shape: BoxShape.circle,
+                        SizedBox(
+                          height: AppResponsive.isLandscape(context)
+                              ? 4.h
+                              : 8.h,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 8.w,
+                              height: 8.w,
+                              decoration: BoxDecoration(
+                                color: printer.isConnected || printer.isVirtual
+                                    ? AppColors.stockBadgeText
+                                    : AppColors.chipInactiveText,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            printer.isVirtual
-                                ? 'Ready (Virtual)'
-                                : printer.isConnected
-                                ? 'Connected'
-                                : 'Disconnected',
-                            style: getTextStyle(
-                              fontSize: 14.6,
-                              color: AppColors.chipInactiveText,
+                            SizedBox(width: 6.w),
+                            Text(
+                              printer.isVirtual
+                                  ? 'Ready (Virtual)'
+                                  : printer.isConnected
+                                  ? 'Connected'
+                                  : 'Disconnected',
+                              style: getTextStyle(
+                                fontSize: 14.6,
+                                color: AppColors.chipInactiveText,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 16.h),
+                          ],
+                        ),
+                        SizedBox(
+                          height: AppResponsive.isLandscape(context)
+                              ? 10.h
+                              : 16.h,
+                        ),
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.all(16.w),
@@ -233,32 +253,38 @@ class PrinterDetailScreen extends GetView<PrinterController> {
                         value: printer.isDefault,
                         onChanged: (_) => controller.toggleDefault(printer.id),
                       ),
-                      SizedBox(height: 24.h),
+                      SizedBox(
+                        height: AppResponsive.isLandscape(context)
+                            ? 12.h
+                            : 20.h,
+                      ),
                       GestureDetector(
                         onTap: () => controller.printTest(printer),
                         child: Container(
-                          height: 55.h,
+                          height: AppResponsive.isLandscape(context)
+                              ? 44.0
+                              : 50.0,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             border: Border.all(
                               color: AppColors.onboardingBackground,
                             ),
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius: BorderRadius.circular(10.r),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
                                 Iconsax.printer,
-                                size: 22.sp,
+                                size: 20.sp,
                                 color: AppColors.onboardingBackground,
                               ),
                               SizedBox(width: 8.w),
                               Text(
                                 'PRINT TEST',
                                 style: getTextStyle(
-                                  fontSize: 16.4,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.onboardingBackground,
                                 ),
@@ -267,10 +293,19 @@ class PrinterDetailScreen extends GetView<PrinterController> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(
+                        height: AppResponsive.isLandscape(context)
+                            ? 10.h
+                            : 16.h,
+                      ),
                       Container(
                         width: double.infinity,
-                        padding: EdgeInsets.all(16.w),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: AppResponsive.isLandscape(context)
+                              ? 10.h
+                              : 14.h,
+                        ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Colors.white, AppColors.rowGradientEnd],
@@ -278,14 +313,14 @@ class PrinterDetailScreen extends GetView<PrinterController> {
                           border: Border.all(
                             color: AppColors.onboardingBackground,
                           ),
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
                               Iconsax.sun_1,
-                              size: 22.sp,
+                              size: 20.sp,
                               color: AppColors.onboardingBackground,
                             ),
                             SizedBox(width: 8.w),
@@ -296,18 +331,18 @@ class PrinterDetailScreen extends GetView<PrinterController> {
                                   Text(
                                     'Tips',
                                     style: getTextStyle(
-                                      fontSize: 16.4,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w500,
                                       color: AppColors.onboardingBackground,
                                     ),
                                   ),
-                                  SizedBox(height: 4.h),
+                                  SizedBox(height: 2.h),
                                   Text(
                                     printer.isVirtual
                                         ? 'Virtual prints open as an on-screen preview; no hardware is required.'
                                         : 'Make sure the printer is powered on and paper is loaded properly',
                                     style: getTextStyle(
-                                      fontSize: 10.9,
+                                      fontSize: 11,
                                       color: AppColors.chipInactiveText,
                                     ),
                                   ),
@@ -317,22 +352,28 @@ class PrinterDetailScreen extends GetView<PrinterController> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 40.h),
+                      SizedBox(
+                        height: AppResponsive.isLandscape(context)
+                            ? 16.h
+                            : 32.h,
+                      ),
                       Center(
                         child: GestureDetector(
                           onTap: () => _confirmRemove(context, printer),
                           child: Container(
-                            width: 197.w,
-                            height: 68.h,
+                            width: 180,
+                            height: AppResponsive.isLandscape(context)
+                                ? 44.0
+                                : 50.0,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: AppColors.dangerRed,
-                              borderRadius: BorderRadius.circular(12.r),
+                              borderRadius: BorderRadius.circular(10.r),
                             ),
                             child: Text(
                               'Remove',
                               style: getTextStyle(
-                                fontSize: 16.4,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white,
                               ),
@@ -343,6 +384,7 @@ class PrinterDetailScreen extends GetView<PrinterController> {
                     ],
                   ),
                 ),
+              ),
         ),
       );
     });

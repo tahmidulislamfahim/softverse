@@ -7,6 +7,7 @@ import '../../../../core/common/widgets/app_text_field.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/auth_controller.dart';
 
 class LoginScreen extends GetView<AuthController> {
@@ -14,30 +15,34 @@ class LoginScreen extends GetView<AuthController> {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = AppResponsive.isWide(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: Center(
           child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: 16.h),
-                const AppBackButton(),
-                SizedBox(height: 46.h),
-                Text(
-                  'Login',
-                  textAlign: TextAlign.center,
-                  style: getTextStyle(
-                    fontSize: 32.8,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.authTextDark,
-                  ).copyWith(letterSpacing: 0.66),
-                ),
-                SizedBox(height: 102.h),
-                AppTextField(
-                  label: 'Email',
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: AppResponsive.maxFormWidth),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: 16.h),
+                  const AppBackButton(),
+                  SizedBox(height: isWide ? 20.h : 46.h),
+                  Text(
+                    'Login',
+                    textAlign: TextAlign.center,
+                    style: getTextStyle(
+                      fontSize: 32.8,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.authTextDark,
+                    ).copyWith(letterSpacing: 0.66),
+                  ),
+                  SizedBox(height: isWide ? 32.h : 80.h),
+                  AppTextField(
+                    label: 'Email',
                   hintText: 'johndheere@gmail.com',
                   controller: controller.emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -122,6 +127,7 @@ class LoginScreen extends GetView<AuthController> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

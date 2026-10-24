@@ -7,6 +7,8 @@ import '../../../core/common/widgets/dashed_divider.dart';
 import '../../../core/utils/constants/colors.dart';
 import '../../../core/utils/helpers/app_helper.dart';
 
+import '../../../core/utils/responsive.dart';
+
 class BillSummaryCard extends StatelessWidget {
   final double subtotal;
   final double discount;
@@ -35,8 +37,14 @@ class BillSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+    final rowSpacing = isLand ? 5.0 : 8.h;
+    final divSpacing = isLand ? 6.0 : 12.h;
+
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: isLand
+          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 10)
+          : EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.r),
         gradient: const LinearGradient(
@@ -55,45 +63,53 @@ class BillSummaryCard extends StatelessWidget {
           _Row(
             label: 'Subtotal',
             value: AppHelperFunctions.formatCurrency(subtotal),
+            compact: isLand,
           ),
           if (discount > 0) ...[
-            SizedBox(height: 8.h),
+            SizedBox(height: rowSpacing),
             _Row(
               label: discountLabel ?? 'Discount',
               value: '-${AppHelperFunctions.formatCurrency(discount)}',
+              compact: isLand,
             ),
           ],
           if (loyaltyDiscount > 0) ...[
-            SizedBox(height: 8.h),
+            SizedBox(height: rowSpacing),
             _Row(
               label: 'Loyalty points',
               value: '-${AppHelperFunctions.formatCurrency(loyaltyDiscount)}',
+              compact: isLand,
             ),
           ],
-          SizedBox(height: 8.h),
+          SizedBox(height: rowSpacing),
           _Row(
             label: 'TAX (${(taxRate * 100).toStringAsFixed(1)}%)',
             value: AppHelperFunctions.formatCurrency(tax),
+            compact: isLand,
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: divSpacing),
           const DashedDivider(),
-          SizedBox(height: 12.h),
+          SizedBox(height: divSpacing),
           _Row(
             label: 'Total Amount',
             value: AppHelperFunctions.formatCurrency(totalAmount),
             emphasize: true,
+            compact: isLand,
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: divSpacing),
           Row(
             children: [
               Text(
                 'Amount Received',
-                style: getTextStyle(fontSize: 14.6, color: Colors.white),
+                style: getTextStyle(
+                  fontSize: isLand ? 13.5 : 14.6,
+                  color: Colors.white,
+                ),
               ),
               const Spacer(),
               Container(
-                width: 95.w,
-                height: 37.h,
+                width: isLand ? 90 : 95.w,
+                height: isLand ? 32 : 37.h,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -105,7 +121,7 @@ class BillSummaryCard extends StatelessWidget {
                   onChanged: onAmountReceivedChanged,
                   controller: amountReceivedController,
                   style: getTextStyle(
-                    fontSize: 14.6,
+                    fontSize: isLand ? 13.5 : 14.6,
                     color: AppColors.authTextDark,
                   ),
                   decoration: InputDecoration(
@@ -120,13 +136,14 @@ class BillSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: divSpacing),
           const DashedDivider(),
-          SizedBox(height: 12.h),
+          SizedBox(height: divSpacing),
           _Row(
             label: 'Change to Return',
             value: AppHelperFunctions.formatCurrency(changeToReturn),
             emphasize: true,
+            compact: isLand,
           ),
         ],
       ),
@@ -138,23 +155,31 @@ class _Row extends StatelessWidget {
   final String label;
   final String value;
   final bool emphasize;
+  final bool compact;
 
   const _Row({
     required this.label,
     required this.value,
     this.emphasize = false,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final baseSize = compact ? 13.5 : 14.6;
+    final empSize = compact ? 15.0 : 16.4;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: getTextStyle(fontSize: 14.6, color: Colors.white)),
+        Text(
+          label,
+          style: getTextStyle(fontSize: baseSize, color: Colors.white),
+        ),
         Text(
           value,
           style: getTextStyle(
-            fontSize: emphasize ? 16.4 : 14.6,
+            fontSize: emphasize ? empSize : baseSize,
             fontWeight: emphasize ? FontWeight.w500 : FontWeight.w400,
             color: Colors.white,
           ),

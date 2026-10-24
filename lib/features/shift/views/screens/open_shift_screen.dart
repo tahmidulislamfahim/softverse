@@ -7,6 +7,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/app_text_field.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/open_shift_controller.dart';
 
 class OpenShiftScreen extends GetView<OpenShiftController> {
@@ -14,14 +15,17 @@ class OpenShiftScreen extends GetView<OpenShiftController> {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+    final iconSize = AppResponsive.appBarIconSize(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 69.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(Icons.arrow_back, color: Colors.white, size: iconSize),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -41,7 +45,7 @@ class OpenShiftScreen extends GetView<OpenShiftController> {
         title: Text(
           'Shift Open',
           style: getTextStyle(
-            fontSize: 21.9,
+            fontSize: isLand ? 16.4 : 21.9,
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -49,7 +53,7 @@ class OpenShiftScreen extends GetView<OpenShiftController> {
         actions: [
           IconButton(
             onPressed: controller.openShiftHistory,
-            icon: Icon(Iconsax.clock, color: Colors.white, size: 26.sp),
+            icon: Icon(Iconsax.clock, color: Colors.white, size: iconSize),
           ),
         ],
       ),
@@ -57,8 +61,10 @@ class OpenShiftScreen extends GetView<OpenShiftController> {
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ResponsiveCenter(
+            maxWidth: 540,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 'Specify the cash amount in your drawer at\nthe start of the shift',
@@ -106,14 +112,16 @@ class OpenShiftScreen extends GetView<OpenShiftController> {
                     ],
                   ),
                   textColor: Colors.white,
-                  width: 190.w,
-                  height: 60,
-                  fontSize: 16.4,
+                  width: 180,
+                  height: AppResponsive.isLandscape(context) ? 44.0 : 50.0,
+                  fontSize: 15,
+                  borderRadius: 10,
                   letterSpacing: 0.16,
                 ),
               ),
             ],
           ),
+        ),
         ),
       ),
     );

@@ -6,6 +6,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../inventory/widgets/toggle_field_row.dart';
 import '../../controller/add_printer_controller.dart';
 import '../../models/printer_model.dart';
@@ -21,10 +22,14 @@ class AddPrinterScreen extends GetView<AddPrinterController> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -44,7 +49,7 @@ class AddPrinterScreen extends GetView<AddPrinterController> {
         title: Text(
           'Add Printer',
           style: getTextStyle(
-            fontSize: 16.4,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -54,8 +59,10 @@ class AddPrinterScreen extends GetView<AddPrinterController> {
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ResponsiveCenter(
+            maxWidth: 600,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               PrinterFormField(
                 label: 'Name',
@@ -341,7 +348,7 @@ class AddPrinterScreen extends GetView<AddPrinterController> {
                   ),
                   textColor: Colors.white,
                   width: 197.w,
-                  height: 68,
+                  height: AppResponsive.isLandscape(context) ? 48 : 56,
                   fontSize: 16.4,
                 ),
               ),
@@ -349,6 +356,7 @@ class AddPrinterScreen extends GetView<AddPrinterController> {
           ),
         ),
       ),
+    ),
     );
   }
 

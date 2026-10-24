@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/checkout_controller.dart';
 
 class PendingOrdersScreen extends GetView<CheckoutController> {
@@ -17,10 +18,14 @@ class PendingOrdersScreen extends GetView<CheckoutController> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -39,7 +44,7 @@ class PendingOrdersScreen extends GetView<CheckoutController> {
         title: Text(
           'Pending Order',
           style: getTextStyle(
-            fontSize: 16.4,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -52,44 +57,50 @@ class PendingOrdersScreen extends GetView<CheckoutController> {
           child: Obx(() {
             final orders = controller.pendingOrders;
             if (orders.isEmpty && !controller.isLoadingPendingOrders.value) {
-              return ListView(
-                padding: EdgeInsets.all(16.w),
-                children: [
-                  SizedBox(height: 160.h),
-                  Icon(
-                    Iconsax.clock,
-                    size: 58.sp,
-                    color: AppColors.chipInactiveText,
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'No pending order found.',
-                    textAlign: TextAlign.center,
-                    style: getTextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.onboardingBackground,
+              return ResponsiveCenter(
+                maxWidth: 600,
+                child: ListView(
+                  padding: EdgeInsets.all(16.w),
+                  children: [
+                    SizedBox(height: 160.h),
+                    Icon(
+                      Iconsax.clock,
+                      size: 58.sp,
+                      color: AppColors.chipInactiveText,
                     ),
-                  ),
-                ],
+                    SizedBox(height: 16.h),
+                    Text(
+                      'No pending order found.',
+                      textAlign: TextAlign.center,
+                      style: getTextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.onboardingBackground,
+                      ),
+                    ),
+                  ],
+                ),
               );
             }
 
-            return ListView.separated(
-              padding: EdgeInsets.all(16.w),
-              itemCount:
-                  orders.length +
-                  (controller.isLoadingPendingOrders.value ? 1 : 0),
-              separatorBuilder: (context, index) => SizedBox(height: 10.h),
-              itemBuilder: (context, index) {
-                if (controller.isLoadingPendingOrders.value && index == 0) {
-                  return const LinearProgressIndicator(minHeight: 2);
-                }
-                final order =
-                    orders[index -
-                        (controller.isLoadingPendingOrders.value ? 1 : 0)];
-                return _PendingOrderTile(order: order);
-              },
+            return ResponsiveCenter(
+              maxWidth: 600,
+              child: ListView.separated(
+                padding: EdgeInsets.all(16.w),
+                itemCount:
+                    orders.length +
+                    (controller.isLoadingPendingOrders.value ? 1 : 0),
+                separatorBuilder: (context, index) => SizedBox(height: 10.h),
+                itemBuilder: (context, index) {
+                  if (controller.isLoadingPendingOrders.value && index == 0) {
+                    return const LinearProgressIndicator(minHeight: 2);
+                  }
+                  final order =
+                      orders[index -
+                          (controller.isLoadingPendingOrders.value ? 1 : 0)];
+                  return _PendingOrderTile(order: order);
+                },
+              ),
             );
           }),
         ),

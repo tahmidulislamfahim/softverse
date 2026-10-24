@@ -5,6 +5,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../routes/app_routes.dart';
 import '../../controller/tax_controller.dart';
 import '../../widgets/tax_list_tile.dart';
@@ -14,14 +15,20 @@ class TaxListScreen extends GetView<TaxController> {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -41,7 +48,7 @@ class TaxListScreen extends GetView<TaxController> {
         title: Text(
           'TAX',
           style: getTextStyle(
-            fontSize: 16.4,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -66,20 +73,28 @@ class TaxListScreen extends GetView<TaxController> {
                   ),
                 );
               }
-              return ListView.separated(
-                padding: EdgeInsets.all(16.w),
-                itemCount: controller.taxes.length,
-                separatorBuilder: (_, _) => SizedBox(height: 12.h),
-                itemBuilder: (context, index) {
-                  final tax = controller.taxes[index];
-                  return TaxListTile(
-                    tax: tax,
-                    onTap: () => Get.toNamed(
-                      AppRoute.getEditTaxScreen(),
-                      arguments: tax.id,
-                    ),
-                  );
-                },
+              return ResponsiveCenter(
+                maxWidth: 580,
+                child: ListView.separated(
+                  padding: EdgeInsets.fromLTRB(
+                    16.w,
+                    16.w,
+                    16.w,
+                    isLand ? 90.0 : 90.h,
+                  ),
+                  itemCount: controller.taxes.length,
+                  separatorBuilder: (_, _) => SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final tax = controller.taxes[index];
+                    return TaxListTile(
+                      tax: tax,
+                      onTap: () => Get.toNamed(
+                        AppRoute.getEditTaxScreen(),
+                        arguments: tax.id,
+                      ),
+                    );
+                  },
+                ),
               );
             }),
             Positioned(

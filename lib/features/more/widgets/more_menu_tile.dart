@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../core/common/styles/global_text_style.dart';
 import '../../../core/utils/constants/colors.dart';
+import '../../../core/utils/responsive.dart';
 
 class MoreMenuTile extends StatelessWidget {
   final IconData icon;
@@ -20,29 +21,37 @@ class MoreMenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+    final tileHeight = isLand ? 46.0 : 54.0;
+    final iconSize = isLand ? 20.0 : 24.0;
+    final fontSize = isLand ? 14.5 : 15.5;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 60.h,
-        padding: centered ? null : EdgeInsets.only(left: 24.w),
+        height: tileHeight,
+        padding: centered ? null : EdgeInsets.symmetric(horizontal: 16.w),
         decoration: BoxDecoration(
           color: AppColors.chipBackground,
           border: Border.all(color: AppColors.cardBorder),
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(10.r),
         ),
         child: Row(
           mainAxisAlignment: centered
               ? MainAxisAlignment.center
               : MainAxisAlignment.start,
           children: [
-            Icon(icon, size: 26.sp, color: AppColors.chipInactiveText),
-            SizedBox(width: 12.w),
-            Text(
-              label,
-              style: getTextStyle(
-                fontSize: 16.4,
-                fontWeight: FontWeight.w500,
-                color: AppColors.chipInactiveText,
+            Icon(icon, size: iconSize, color: AppColors.chipInactiveText),
+            SizedBox(width: 10.w),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: getTextStyle(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.chipInactiveText,
+                ),
               ),
             ),
           ],

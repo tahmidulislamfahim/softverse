@@ -5,6 +5,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/pos_device_controller.dart';
 import '../../models/pos_device_model.dart';
 
@@ -17,7 +18,7 @@ class PosDeviceScreen extends GetView<PosDeviceController> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         // Picking a device is part of signing in - not optional.
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
@@ -38,7 +39,7 @@ class PosDeviceScreen extends GetView<PosDeviceController> {
         title: Text(
           'Choose POS device',
           style: getTextStyle(
-            fontSize: 16.4,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -55,38 +56,44 @@ class PosDeviceScreen extends GetView<PosDeviceController> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (controller.devices.isEmpty) {
-                return ListView(
-                  padding: EdgeInsets.all(24.w),
-                  children: [
-                    SizedBox(height: 80.h),
-                    Text(
-                      'No active POS devices for this store.\nThe business manager '
-                      'can add one on the website under Settings > POS devices.',
-                      textAlign: TextAlign.center,
-                      style: getTextStyle(
-                        fontSize: 14.4,
-                        color: AppColors.chipInactiveText,
+                return ResponsiveCenter(
+                  maxWidth: 600,
+                  child: ListView(
+                    padding: EdgeInsets.all(24.w),
+                    children: [
+                      SizedBox(height: 80.h),
+                      Text(
+                        'No active POS devices for this store.\nThe business manager '
+                        'can add one on the website under Settings > POS devices.',
+                        textAlign: TextAlign.center,
+                        style: getTextStyle(
+                          fontSize: 14.4,
+                          color: AppColors.chipInactiveText,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               }
-              return ListView.separated(
-                padding: EdgeInsets.all(16.w),
-                itemCount: controller.devices.length,
-                separatorBuilder: (_, _) => SizedBox(height: 12.h),
-                itemBuilder: (context, index) {
-                  final device = controller.devices[index];
-                  final isSelected =
-                      controller.selectedDeviceId.value == device.id;
-                  return _PosDeviceTile(
-                    device: device,
-                    isSelected: isSelected,
-                    onTap: device.inUse
-                        ? null
-                        : () => controller.select(device),
-                  );
-                },
+              return ResponsiveCenter(
+                maxWidth: 600,
+                child: ListView.separated(
+                  padding: EdgeInsets.all(16.w),
+                  itemCount: controller.devices.length,
+                  separatorBuilder: (_, _) => SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final device = controller.devices[index];
+                    final isSelected =
+                        controller.selectedDeviceId.value == device.id;
+                    return _PosDeviceTile(
+                      device: device,
+                      isSelected: isSelected,
+                      onTap: device.inUse
+                          ? null
+                          : () => controller.select(device),
+                    );
+                  },
+                ),
               );
             }),
           ),

@@ -6,6 +6,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/app_text_field.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/add_tax_controller.dart';
 import '../../models/tax_model.dart';
 import '../../widgets/tax_type_picker.dart';
@@ -19,10 +20,14 @@ class AddTaxScreen extends GetView<AddTaxController> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -42,7 +47,7 @@ class AddTaxScreen extends GetView<AddTaxController> {
         title: Text(
           'Add Tax',
           style: getTextStyle(
-            fontSize: 16.4,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -52,8 +57,10 @@ class AddTaxScreen extends GetView<AddTaxController> {
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ResponsiveCenter(
+            maxWidth: 540,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 'Name',
@@ -179,13 +186,15 @@ class AddTaxScreen extends GetView<AddTaxController> {
                   ),
                 ),
               ),
-              SizedBox(height: 40.h),
+              SizedBox(
+                height: AppResponsive.isLandscape(context) ? 16.h : 32.h,
+              ),
               Center(
                 child: GestureDetector(
                   onTap: controller.save,
                   child: Container(
-                    width: 197.w,
-                    height: 68.h,
+                    width: 180,
+                    height: AppResponsive.isLandscape(context) ? 44.0 : 50.0,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
@@ -194,12 +203,12 @@ class AddTaxScreen extends GetView<AddTaxController> {
                           AppColors.shiftButtonGradientEnd,
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Text(
                       'Save',
                       style: getTextStyle(
-                        fontSize: 16.4,
+                        fontSize: 15,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
                       ),
@@ -211,6 +220,7 @@ class AddTaxScreen extends GetView<AddTaxController> {
           ),
         ),
       ),
+    ),
     );
   }
 }

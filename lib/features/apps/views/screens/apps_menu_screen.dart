@@ -7,6 +7,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/services/feature_settings.dart';
 import '../../../../core/services/main_station_server.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../routes/app_routes.dart';
 import '../../models/app_device_model.dart';
 
@@ -19,10 +20,14 @@ class AppsMenuScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -42,7 +47,7 @@ class AppsMenuScreen extends StatelessWidget {
         title: Text(
           'Apps',
           style: getTextStyle(
-            fontSize: 16.4,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -50,20 +55,28 @@ class AppsMenuScreen extends StatelessWidget {
       ),
       body: SafeArea(
         top: false,
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: AppResponsive.isLandscape(context) ? 10.h : 16.h,
+          ),
+          child: ResponsiveCenter(
+            maxWidth: 500,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               FutureBuilder<String>(
                 future: MainStationServer.instance.localUrl(),
                 builder: (context, snapshot) => Container(
-                  padding: EdgeInsets.all(14.w),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: AppResponsive.isLandscape(context) ? 10.h : 14.h,
+                  ),
                   margin: EdgeInsets.only(bottom: 12.h),
                   decoration: BoxDecoration(
                     color: AppColors.chipBackground,
                     border: Border.all(color: AppColors.cardBorder),
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,11 +89,11 @@ class AppsMenuScreen extends StatelessWidget {
                           color: AppColors.onboardingBackground,
                         ),
                       ),
-                      SizedBox(height: 6.h),
+                      SizedBox(height: 4.h),
                       Text(
                         snapshot.data ?? 'Starting...',
                         style: getTextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w500,
                           color: AppColors.onboardingBackground,
                         ),
@@ -120,6 +133,7 @@ class AppsMenuScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -136,10 +150,14 @@ class _AppTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: isLand ? 10.h : 12.h,
+        ),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
@@ -147,13 +165,13 @@ class _AppTile extends StatelessWidget {
             colors: [Colors.white, AppColors.rowGradientEnd],
           ),
           border: Border.all(color: AppColors.cardBorder),
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(10.r),
         ),
         child: Row(
           children: [
             Icon(
               Iconsax.monitor,
-              size: 26.sp,
+              size: isLand ? 22.sp : 26.sp,
               color: AppColors.onboardingBackground,
             ),
             SizedBox(width: 12.w),

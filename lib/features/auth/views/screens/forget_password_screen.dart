@@ -9,6 +9,7 @@ import '../../../../core/common/widgets/icon_bubble.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/common/widgets/step_progress_indicator.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/auth_controller.dart';
 
 class ForgetPasswordScreen extends GetView<AuthController> {
@@ -19,9 +20,9 @@ class ForgetPasswordScreen extends GetView<AuthController> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 37.w),
-          child: SingleChildScrollView(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: ResponsiveCenter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

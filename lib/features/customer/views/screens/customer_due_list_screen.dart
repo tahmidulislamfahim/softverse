@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/utils/helpers/app_helper.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/customer_due_controller.dart';
 
 class CustomerDueListScreen extends GetView<CustomerDueController> {
@@ -9,7 +10,10 @@ class CustomerDueListScreen extends GetView<CustomerDueController> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Due Balances')),
+    appBar: AppBar(
+      title: const Text('Due Balances'),
+      toolbarHeight: AppResponsive.appBarHeight(context),
+    ),
     body: Obx(() {
       if (controller.isLoading.value) {
         return const Center(child: CircularProgressIndicator());
@@ -19,8 +23,10 @@ class CustomerDueListScreen extends GetView<CustomerDueController> {
       }
       return RefreshIndicator(
         onRefresh: controller.fetchDues,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: ResponsiveCenter(
+          maxWidth: 580,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
           children: [
             Card(
               color: Theme.of(context).colorScheme.primaryContainer,
@@ -57,6 +63,7 @@ class CustomerDueListScreen extends GetView<CustomerDueController> {
             ),
           ],
         ),
+      ),
       );
     }),
   );

@@ -7,6 +7,7 @@ import '../../../../core/common/widgets/dashed_divider.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../../core/utils/helpers/app_helper.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/close_shift_controller.dart';
 
 class CloseShiftScreen extends GetView<CloseShiftController> {
@@ -14,14 +15,17 @@ class CloseShiftScreen extends GetView<CloseShiftController> {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+    final iconSize = AppResponsive.appBarIconSize(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 69.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(Icons.arrow_back, color: Colors.white, size: iconSize),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -41,7 +45,7 @@ class CloseShiftScreen extends GetView<CloseShiftController> {
         title: Text(
           'Close shift',
           style: getTextStyle(
-            fontSize: 21.9,
+            fontSize: isLand ? 16.4 : 21.9,
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -51,8 +55,10 @@ class CloseShiftScreen extends GetView<CloseShiftController> {
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ResponsiveCenter(
+            maxWidth: 540,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -116,21 +122,25 @@ class CloseShiftScreen extends GetView<CloseShiftController> {
                   ],
                 ),
               ),
-              SizedBox(height: 40.h),
+              SizedBox(
+                height: AppResponsive.isLandscape(context) ? 16.h : 32.h,
+              ),
               Center(
                 child: PrimaryButton(
                   label: 'CLOSE SHIFT',
                   onPressed: controller.closeShift,
                   backgroundColor: AppColors.dangerRed,
                   textColor: Colors.white,
-                  width: 190.w,
-                  height: 60,
-                  fontSize: 16.4,
+                  width: 180,
+                  height: AppResponsive.isLandscape(context) ? 44.0 : 50.0,
+                  fontSize: 15,
+                  borderRadius: 10,
                   letterSpacing: 0.16,
                 ),
               ),
             ],
           ),
+        ),
         ),
       ),
     );

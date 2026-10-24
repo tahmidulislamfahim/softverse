@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../controller/discount_controller.dart';
 
 class DiscountFormScreen extends GetView<DiscountFormController> {
@@ -11,8 +12,10 @@ class DiscountFormScreen extends GetView<DiscountFormController> {
     appBar: AppBar(
       title: Text(controller.isEditing ? 'Edit Discount' : 'Create Discount'),
     ),
-    body: ListView(
-      padding: const EdgeInsets.all(16),
+    body: ResponsiveCenter(
+      maxWidth: 600,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
       children: [
         TextField(
           controller: controller.nameController,
@@ -86,5 +89,6 @@ class DiscountFormScreen extends GetView<DiscountFormController> {
         ),
       ],
     ),
-  );
+  ),
+);
 }

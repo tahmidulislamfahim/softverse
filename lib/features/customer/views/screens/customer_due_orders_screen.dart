@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/utils/helpers/app_helper.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/customer_due_orders_controller.dart';
 import '../../models/due_order_model.dart';
 
@@ -12,6 +13,7 @@ class CustomerDueOrdersScreen extends GetView<CustomerDueOrdersController> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Obx(() => Text(controller.customerName.value)),
+      toolbarHeight: AppResponsive.appBarHeight(context),
     ),
     body: Obx(() {
       if (controller.isLoading.value) {
@@ -22,8 +24,10 @@ class CustomerDueOrdersScreen extends GetView<CustomerDueOrdersController> {
       }
       return RefreshIndicator(
         onRefresh: controller.fetchDueOrders,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: ResponsiveCenter(
+          maxWidth: 580,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
           children: [
             Card(
               color: Theme.of(context).colorScheme.primaryContainer,
@@ -71,6 +75,7 @@ class CustomerDueOrdersScreen extends GetView<CustomerDueOrdersController> {
             ),
           ],
         ),
+      ),
       );
     }),
   );

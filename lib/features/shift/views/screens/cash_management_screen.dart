@@ -6,6 +6,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/app_text_field.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/cash_management_controller.dart';
 
 class CashManagementScreen extends GetView<CashManagementController> {
@@ -13,14 +14,17 @@ class CashManagementScreen extends GetView<CashManagementController> {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+    final iconSize = AppResponsive.appBarIconSize(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 69.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(Icons.arrow_back, color: Colors.white, size: iconSize),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -40,7 +44,7 @@ class CashManagementScreen extends GetView<CashManagementController> {
         title: Text(
           'CASH MANAGEMENT',
           style: getTextStyle(
-            fontSize: 21.9,
+            fontSize: isLand ? 16.4 : 21.9,
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -50,8 +54,10 @@ class CashManagementScreen extends GetView<CashManagementController> {
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ResponsiveCenter(
+            maxWidth: 540,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _FieldLabel('Amount'),
               SizedBox(height: 8.h),
@@ -92,8 +98,9 @@ class CashManagementScreen extends GetView<CashManagementController> {
                       backgroundColor: Colors.white,
                       textColor: AppColors.onboardingBackground,
                       borderColor: AppColors.onboardingBackground,
-                      height: 60,
-                      fontSize: 16.4,
+                      height: AppResponsive.isLandscape(context) ? 44.0 : 50.0,
+                      fontSize: 15,
+                      borderRadius: 10,
                       letterSpacing: 0.16,
                     ),
                   ),
@@ -105,8 +112,9 @@ class CashManagementScreen extends GetView<CashManagementController> {
                       backgroundColor: Colors.white,
                       textColor: AppColors.dangerRed,
                       borderColor: AppColors.dangerRed,
-                      height: 60,
-                      fontSize: 16.4,
+                      height: AppResponsive.isLandscape(context) ? 44.0 : 50.0,
+                      fontSize: 15,
+                      borderRadius: 10,
                       letterSpacing: 0.16,
                     ),
                   ),
@@ -114,6 +122,7 @@ class CashManagementScreen extends GetView<CashManagementController> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

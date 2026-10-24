@@ -5,6 +5,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/store_controller.dart';
 
 class StoreSelectScreen extends GetView<StoreController> {
@@ -16,10 +17,14 @@ class StoreSelectScreen extends GetView<StoreController> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 55.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -38,7 +43,7 @@ class StoreSelectScreen extends GetView<StoreController> {
         title: Text(
           'Select store',
           style: getTextStyle(
-            fontSize: 16.4,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -65,51 +70,61 @@ class StoreSelectScreen extends GetView<StoreController> {
               ),
             );
           }
-          return ListView.separated(
-            padding: EdgeInsets.all(16.w),
-            itemCount: controller.stores.length,
-            separatorBuilder: (_, _) => SizedBox(height: 12.h),
-            itemBuilder: (context, index) {
-              final store = controller.stores[index];
-              final selected = controller.currentStoreId.value == store.id;
-              return InkWell(
-                onTap: () => controller.pick(store),
-                borderRadius: BorderRadius.circular(12.r),
-                child: Container(
-                  padding: EdgeInsets.all(14.w),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(
-                      color: selected
-                          ? AppColors.onboardingBackground
-                          : AppColors.cardBorder,
-                      width: selected ? 1.5 : 1,
+          final isLand = AppResponsive.isLandscape(context);
+          return ResponsiveCenter(
+            maxWidth: 500,
+            child: ListView.separated(
+              padding: EdgeInsets.symmetric(
+                horizontal: 16.w,
+                vertical: isLand ? 10.h : 16.h,
+              ),
+              itemCount: controller.stores.length,
+              separatorBuilder: (_, _) => SizedBox(height: isLand ? 8.h : 12.h),
+              itemBuilder: (context, index) {
+                final store = controller.stores[index];
+                final selected = controller.currentStoreId.value == store.id;
+                return InkWell(
+                  onTap: () => controller.pick(store),
+                  borderRadius: BorderRadius.circular(10.r),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: isLand ? 10.h : 14.h,
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Iconsax.shop, size: 22.sp),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Text(
-                          store.name,
-                          style: getTextStyle(
-                            fontSize: 15.2,
-                            fontWeight: FontWeight.w500,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(
+                        color: selected
+                            ? AppColors.onboardingBackground
+                            : AppColors.cardBorder,
+                        width: selected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Iconsax.shop, size: 20.sp),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Text(
+                            store.name,
+                            style: getTextStyle(
+                              fontSize: isLand ? 14.4 : 15.2,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                      if (selected)
-                        Icon(
-                          Iconsax.tick_circle,
-                          color: AppColors.onboardingBackground,
-                          size: 22.sp,
-                        ),
-                    ],
+                        if (selected)
+                          Icon(
+                            Iconsax.tick_circle,
+                            color: AppColors.onboardingBackground,
+                            size: 20.sp,
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
         }),
       ),

@@ -8,6 +8,7 @@ import '../../../../core/common/widgets/product_image.dart';
 import '../../../../core/services/feature_settings.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../../core/utils/helpers/app_helper.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../controller/item_detail_controller.dart';
 import '../../widgets/barcode_graphic.dart';
 import '../../widgets/date_field_row.dart';
@@ -24,10 +25,14 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 69.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: AppResponsive.appBarIconSize(context),
+          ),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -47,7 +52,7 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
         title: Text(
           controller.product.name,
           style: getTextStyle(
-            fontSize: 21.9,
+            fontSize: AppResponsive.appBarTitleSize(context),
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -55,7 +60,11 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
         actions: [
           IconButton(
             onPressed: controller.openEdit,
-            icon: Icon(Iconsax.edit, color: Colors.white, size: 22.sp),
+            icon: Icon(
+              Iconsax.edit,
+              color: Colors.white,
+              size: AppResponsive.appBarIconSize(context),
+            ),
           ),
         ],
       ),
@@ -63,8 +72,10 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ResponsiveCenter(
+            maxWidth: 560,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(height: 16.h),
               Center(
@@ -233,6 +244,7 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -7,6 +7,8 @@ import '../../../core/common/widgets/primary_button.dart';
 import '../../../core/utils/constants/colors.dart';
 import '../../../core/utils/helpers/app_helper.dart';
 
+import '../../../core/utils/responsive.dart';
+
 class OrderSummaryCard extends StatelessWidget {
   final String orderId;
   final int itemCount;
@@ -23,8 +25,12 @@ class OrderSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: isLand
+          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 10)
+          : EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.r),
         gradient: const LinearGradient(
@@ -43,16 +49,16 @@ class OrderSummaryCard extends StatelessWidget {
                 Text(
                   orderId,
                   style: getTextStyle(
-                    fontSize: 16.4,
+                    fontSize: isLand ? 15.0 : 16.4,
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: isLand ? 6 : 20.h),
                 Text(
                   'Item : $itemCount',
                   style: getTextStyle(
-                    fontSize: 12.8,
+                    fontSize: isLand ? 12.0 : 12.8,
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
                   ),
@@ -66,20 +72,20 @@ class OrderSummaryCard extends StatelessWidget {
               Text(
                 AppHelperFunctions.formatCurrency(total),
                 style: getTextStyle(
-                  fontSize: 21.9,
+                  fontSize: isLand ? 18.0 : 21.9,
                   fontWeight: FontWeight.w500,
                   color: Colors.white,
                 ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: isLand ? 6 : 12.h),
               PrimaryButton(
                 label: 'Checkout',
                 onPressed: onCheckout,
                 icon: Iconsax.add_circle,
-                iconSize: 18,
-                width: 133.w,
-                height: 37,
-                fontSize: 16.4,
+                iconSize: isLand ? 16 : 18,
+                width: isLand ? 116 : 133.w,
+                height: isLand ? 34 : 37,
+                fontSize: isLand ? 14.5 : 16.4,
                 textColor: AppColors.authTextDark,
                 gradient: const LinearGradient(
                   colors: [

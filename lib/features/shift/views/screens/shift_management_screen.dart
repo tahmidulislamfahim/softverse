@@ -5,6 +5,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../routes/app_routes.dart';
 import '../../controller/shift_controller.dart';
 import '../../widgets/cash_drawer_card.dart';
@@ -17,14 +18,17 @@ class ShiftManagementScreen extends GetView<ShiftController> {
 
   @override
   Widget build(BuildContext context) {
+    final isLand = AppResponsive.isLandscape(context);
+    final iconSize = AppResponsive.appBarIconSize(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        toolbarHeight: 69.h,
+        toolbarHeight: AppResponsive.appBarHeight(context),
         leading: IconButton(
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22.sp),
+          icon: Icon(Icons.arrow_back, color: Colors.white, size: iconSize),
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -44,7 +48,7 @@ class ShiftManagementScreen extends GetView<ShiftController> {
         title: Text(
           'Shift Management',
           style: getTextStyle(
-            fontSize: 21.9,
+            fontSize: isLand ? 16.4 : 21.9,
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -52,7 +56,7 @@ class ShiftManagementScreen extends GetView<ShiftController> {
         actions: [
           IconButton(
             onPressed: controller.openShiftHistory,
-            icon: Icon(Iconsax.clock, color: Colors.white, size: 26.sp),
+            icon: Icon(Iconsax.clock, color: Colors.white, size: iconSize),
           ),
         ],
       ),
@@ -90,15 +94,17 @@ class ShiftManagementScreen extends GetView<ShiftController> {
 
           return SingleChildScrollView(
             padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ShiftActionButton(
-                  icon: Iconsax.clock,
-                  label: 'CASH MANAGEMENT',
-                  filled: true,
-                  onTap: controller.openCashManagement,
-                ),
+            child: ResponsiveCenter(
+              maxWidth: 640,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ShiftActionButton(
+                    icon: Iconsax.clock,
+                    label: 'CASH MANAGEMENT',
+                    filled: true,
+                    onTap: controller.openCashManagement,
+                  ),
                 SizedBox(height: 16.h),
                 ShiftActionButton(
                   icon: Iconsax.clock,
@@ -128,6 +134,7 @@ class ShiftManagementScreen extends GetView<ShiftController> {
                 ),
               ],
             ),
+          ),
           );
         }),
       ),
