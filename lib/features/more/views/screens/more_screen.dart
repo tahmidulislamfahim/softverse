@@ -79,12 +79,13 @@ class MoreScreen extends GetView<MoreController> {
                   Obx(() {
                     final hasShift = FeatureSettings.isEnabled('shifts');
                     final hasTables = FeatureSettings.isEnabled('table_options');
+                    if (!hasShift && !hasTables) return const SizedBox.shrink();
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Row(
                           children: [
-                            if (hasShift) ...[
+                            if (hasShift)
                               Expanded(
                                 child: MoreMenuTile(
                                   icon: Iconsax.clock,
@@ -92,54 +93,19 @@ class MoreScreen extends GetView<MoreController> {
                                   onTap: controller.openShift,
                                 ),
                               ),
-                              SizedBox(width: 12.w),
-                            ],
-                            Expanded(
-                              child: MoreMenuTile(
-                                icon: Iconsax.task_square,
-                                label: 'Item'.tr,
-                                onTap: controller.openItem,
-                              ),
-                            ),
-                            if (!hasShift) ...[
-                              SizedBox(width: 12.w),
+                            if (hasShift && hasTables) SizedBox(width: 12.w),
+                            if (hasTables)
                               Expanded(
                                 child: MoreMenuTile(
-                                  icon: Iconsax.user,
-                                  label: 'Customer'.tr,
-                                  onTap: controller.openCustomer,
+                                  icon: Icons.table_restaurant,
+                                  label: 'Tables'.tr,
+                                  onTap: controller.openTables,
                                 ),
                               ),
-                            ],
+                            if (!hasShift || !hasTables)
+                              const Expanded(child: SizedBox.shrink()),
                           ],
                         ),
-                        if (hasShift || hasTables) ...[
-                          SizedBox(height: 8.h),
-                          Row(
-                            children: [
-                              if (hasTables) ...[
-                                Expanded(
-                                  child: MoreMenuTile(
-                                    icon: Icons.table_restaurant,
-                                    label: 'Tables'.tr,
-                                    onTap: controller.openTables,
-                                  ),
-                                ),
-                                SizedBox(width: 12.w),
-                              ],
-                              if (hasShift)
-                                Expanded(
-                                  child: MoreMenuTile(
-                                    icon: Iconsax.user,
-                                    label: 'Customer'.tr,
-                                    onTap: controller.openCustomer,
-                                  ),
-                                ),
-                              if (!hasShift && hasTables)
-                                const Expanded(child: SizedBox.shrink()),
-                            ],
-                          ),
-                        ],
                       ],
                     );
                   }),
@@ -158,12 +124,6 @@ class MoreScreen extends GetView<MoreController> {
                         ? SizedBox(height: 12.h)
                         : const SizedBox.shrink(),
                   ),
-                  MoreMenuTile(
-                    icon: Iconsax.task_square,
-                    label: 'Item'.tr,
-                    onTap: controller.openItem,
-                  ),
-                  SizedBox(height: 12.h),
                   Obx(
                     () => FeatureSettings.isEnabled('table_options')
                         ? MoreMenuTile(
@@ -177,11 +137,6 @@ class MoreScreen extends GetView<MoreController> {
                     () => FeatureSettings.isEnabled('table_options')
                         ? SizedBox(height: 12.h)
                         : const SizedBox.shrink(),
-                  ),
-                  MoreMenuTile(
-                    icon: Iconsax.user,
-                    label: 'Customer'.tr,
-                    onTap: controller.openCustomer,
                   ),
                 ],
                 SizedBox(height: isLand ? 12.h : 20.h),

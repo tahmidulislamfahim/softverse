@@ -153,6 +153,7 @@ class InventoryController extends GetxController {
           (entry) => InventoryProduct.fromApi(Map<String, dynamic>.from(entry)),
         )
         .toList();
+    mapped.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     products.assignAll(mapped);
     if (categories.length == 1) {
       _applyCategoryNames(mapped.map((product) => product.categoryName));

@@ -780,7 +780,7 @@ class CreateItemController extends GetxController {
   }
 
   double? _number(String value) {
-    final cleaned = value.replaceAll('\$', '').replaceAll(',', '').trim();
+    final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '').trim();
     if (cleaned.isEmpty) return null;
     return double.tryParse(cleaned);
   }

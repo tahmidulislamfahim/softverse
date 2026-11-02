@@ -35,7 +35,6 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   final newPinController = TextEditingController();
   final confirmPinController = TextEditingController();
 
-  DateTime? _pausedAt;
   Timer? _idleTimer;
 
   static const _noLockRoutes = {
@@ -59,17 +58,12 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      _pausedAt = DateTime.now();
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      lock();
     } else if (state == AppLifecycleState.resumed) {
-      final pausedAt = _pausedAt;
-      _pausedAt = null;
-      if (pausedAt != null &&
-          DateTime.now().difference(pausedAt) >= backgroundGrace) {
-        lock();
-      } else {
-        touch();
-      }
+      touch();
     }
   }
 
@@ -115,6 +109,20 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
 
   Future<void> unlock() async {
     final entered = pin.value;
+    final enteredHash = _hash(entered);
+
+    // Instant local unlock if cached PIN hash matches (< 10ms response)
+    if (StorageService.localPinHash != null &&
+        StorageService.localPinHash == enteredHash) {
+      _finishUnlock();
+      // Silently sync verification with server in background
+      unawaited(_networkCaller.postRequest(
+        ApiConstants.verifyMyPin,
+        body: {'pin': entered},
+      ));
+      return;
+    }
+
     isVerifying.value = true;
     final response = await _networkCaller.postRequest(
       ApiConstants.verifyMyPin,
@@ -123,13 +131,13 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     isVerifying.value = false;
 
     if (response.isSuccess) {
-      await StorageService.setLocalPinHash(_hash(entered));
+      await StorageService.setLocalPinHash(enteredHash);
       _finishUnlock();
       return;
     }
     // Offline: the PIN last confirmed by the server on this device.
     final offline = response.statusCode == 0 || response.statusCode == 408;
-    if (offline && StorageService.localPinHash == _hash(entered)) {
+    if (offline && StorageService.localPinHash == enteredHash) {
       _finishUnlock();
       return;
     }

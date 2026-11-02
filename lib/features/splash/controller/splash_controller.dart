@@ -4,6 +4,7 @@ import '../../../core/services/feature_settings.dart';
 
 import '../../../core/services/storage_service.dart';
 import '../../../routes/app_routes.dart';
+import '../../app_lock/controller/app_lock_controller.dart';
 import '../../store/controller/store_controller.dart';
 
 class SplashController extends GetxController {
@@ -27,5 +28,8 @@ class SplashController extends GetxController {
     Get.offAllNamed(AppRoute.getHomeScreen());
     // A store may have been added since the last session.
     Get.find<StoreController>().ensureSelected();
+    if (Get.isRegistered<AppLockController>()) {
+      Get.find<AppLockController>().lock();
+    }
   }
 }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../services/business_profile_service.dart';
+import '../../services/session_lifecycle_service.dart';
 
 import '../constants/colors.dart';
 
@@ -28,6 +29,11 @@ class AppHelperFunctions {
   }
 
   static void _showCompact(String message, AppSnackBarType type) {
+    if (type == AppSnackBarType.failure &&
+        SessionLifecycleService.suppressAuthErrors &&
+        message.toLowerCase().contains('unauthorized')) {
+      return;
+    }
     if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
     Get.rawSnackbar(
       snackPosition: SnackPosition.TOP,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../../../../routes/app_routes.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/app_nav_drawer.dart';
@@ -51,6 +52,12 @@ class InventoryScreen extends GetView<InventoryController> {
           ),
         ),
         actions: [
+          IconButton(
+            onPressed: () => Get.toNamed(AppRoute.getItemsMenuScreen()),
+            tooltip: 'Items',
+            icon: Icon(Iconsax.task_square, color: Colors.white, size: iconSize),
+          ),
+          SizedBox(width: 4.w),
           Icon(Iconsax.notification, color: Colors.white, size: iconSize),
           SizedBox(width: 16.w),
         ],

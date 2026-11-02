@@ -64,7 +64,7 @@ class ControllerBinder extends Bindings {
     Get.lazyPut<MoreController>(() => MoreController(), fenix: true);
     Get.lazyPut<ShiftController>(() => ShiftController(), fenix: true);
     Get.lazyPut<CustomerController>(() => CustomerController(), fenix: true);
-    Get.lazyPut<PrinterController>(() => PrinterController(), fenix: true);
+    Get.put<PrinterController>(PrinterController(), permanent: true);
     Get.lazyPut<PosDeviceController>(() => PosDeviceController(), fenix: true);
     Get.lazyPut<AppsController>(() => AppsController(), fenix: true);
     Get.lazyPut<TaxController>(() => TaxController(), fenix: true);

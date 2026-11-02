@@ -248,6 +248,8 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
+    SessionLifecycleService.isSigningOut = true;
+    try {
     // Free this till's POS device for others, and make the next login
     // choose the store and POS device again.
     await _networkCaller.postRequest(
@@ -264,6 +266,9 @@ class AuthController extends GetxController {
       );
     }
     await SessionLifecycleService.endSession();
+    } finally {
+      SessionLifecycleService.isSigningOut = false;
+    }
   }
 
   Future<void> _saveSession(dynamic raw) async {

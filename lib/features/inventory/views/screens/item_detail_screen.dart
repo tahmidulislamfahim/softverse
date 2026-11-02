@@ -109,6 +109,17 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
                         color: AppColors.onboardingBackground,
                       ),
                     ),
+                    if (product.description.isNotEmpty) ...[
+                      SizedBox(height: 6.h),
+                      Text(
+                        product.description,
+                        textAlign: TextAlign.center,
+                        style: getTextStyle(
+                          fontSize: 13.0,
+                          color: AppColors.chipInactiveText,
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 12.h),
                     LabeledRow(
                       label: 'Sold by',

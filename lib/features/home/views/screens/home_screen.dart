@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../../../../routes/app_routes.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
+import '../../../customer/controller/customer_controller.dart';
 
-import '../../../../core/common/widgets/till_identity_title.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/app_nav_drawer.dart';
@@ -50,8 +52,82 @@ class HomeScreen extends GetView<HomeController> {
             ),
           ),
         ),
-        title: const TillIdentityTitle(),
+        title: GestureDetector(
+          onTap: controller.checkout,
+          behavior: HitTestBehavior.opaque,
+          child: Obx(() {
+            final count = controller.orderItemCount;
+            final total = controller.orderTotal;
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(
+                      Iconsax.shopping_cart,
+                      color: Colors.white,
+                      size: iconSize,
+                    ),
+                    if (count > 0)
+                      Positioned(
+                        right: -6,
+                        top: -6,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            color: AppColors.dangerRed,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '$count',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                SizedBox(width: 8.w),
+                Text(
+                  count > 0
+                      ? 'Ticket (${AppHelperFunctions.formatCurrency(total)})'
+                      : 'Ticket',
+                  style: getTextStyle(
+                    fontSize: isDualPane ? 15.0 : 17.0,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
         actions: [
+          IconButton(
+            onPressed: () => () {
+              if (Get.isRegistered<CustomerController>()) {
+                final customerCtrl = Get.find<CustomerController>();
+                customerCtrl.showList();
+                customerCtrl.fetchCustomers();
+              }
+              Get.toNamed(AppRoute.getViewCustomerScreen());
+            }(),
+            tooltip: 'Customers',
+            icon: Icon(
+              Iconsax.user,
+              color: Colors.white,
+              size: iconSize,
+            ),
+          ),
           Obx(
             () => FeatureSettings.isEnabled('open_order')
                 ? IconButton(

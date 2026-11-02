@@ -9,6 +9,7 @@ class QuantityStepper extends StatelessWidget {
   final int quantity;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
+  final ValueChanged<int>? onQuantityChanged;
   final double width;
   final double height;
 
@@ -17,8 +18,9 @@ class QuantityStepper extends StatelessWidget {
     required this.quantity,
     required this.onIncrement,
     required this.onDecrement,
-    this.width = 109,
-    this.height = 37,
+    this.onQuantityChanged,
+    this.width = 114,
+    this.height = 38,
   });
 
   @override
@@ -26,7 +28,7 @@ class QuantityStepper extends StatelessWidget {
     return Container(
       width: width.w,
       height: height.h,
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999.r),
         gradient: const LinearGradient(
@@ -38,19 +40,69 @@ class QuantityStepper extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: onDecrement,
-            child: Icon(Iconsax.minus, size: 18.sp, color: Colors.white),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: EdgeInsets.all(4.w),
+              child: Icon(Iconsax.minus, size: 18.sp, color: Colors.white),
+            ),
           ),
-          Text(
-            '$quantity',
-            style: getTextStyle(
-              fontSize: 16.4,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () async {
+              final textController = TextEditingController(text: '$quantity');
+              final result = await showDialog<int>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Enter Quantity'),
+                  content: TextField(
+                    controller: textController,
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        final val = int.tryParse(textController.text.trim());
+                        if (val != null && val >= 0) {
+                          Navigator.of(ctx).pop(val);
+                        }
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+              if (result != null && onQuantityChanged != null) {
+                onQuantityChanged!(result);
+              }
+            },
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+              child: Text(
+                '$quantity',
+                style: getTextStyle(
+                  fontSize: 16.4,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
           GestureDetector(
             onTap: onIncrement,
-            child: Icon(Iconsax.add, size: 18.sp, color: Colors.white),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: EdgeInsets.all(4.w),
+              child: Icon(Iconsax.add, size: 18.sp, color: Colors.white),
+            ),
           ),
         ],
       ),

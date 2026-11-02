@@ -51,7 +51,37 @@ class InvoiceItemCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _Row(label: item.name, value: item.price),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          style: getTextStyle(
+                            fontSize: 14.6,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.authTextDark,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        AppHelperFunctions.formatCurrency(item.price * item.quantity),
+                        style: getTextStyle(
+                          fontSize: 15.0,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.onboardingBackground,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 3.h),
+                  Text(
+                    '${item.quantity} x ${AppHelperFunctions.formatCurrency(item.price)}',
+                    style: getTextStyle(
+                      fontSize: 12.5,
+                      color: AppColors.chipInactiveText,
+                    ),
+                  ),
                   if (item.bundle != null) ...[
                     SizedBox(height: 4.h),
                     _Row(label: item.bundle!.name, value: item.bundle!.price),

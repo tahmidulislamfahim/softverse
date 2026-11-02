@@ -5,6 +5,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../controller/store_controller.dart';
 
@@ -13,19 +14,41 @@ class StoreSelectScreen extends GetView<StoreController> {
 
   @override
   Widget build(BuildContext context) {
+    return Obx(() {
+      // Right after login no store is chosen yet - the till can't sell
+      // without one, so going back to the POS must not be possible.
+      final mustPick = controller.currentStoreId.value == null;
+      return PopScope(
+        canPop: !mustPick,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) {
+            AppHelperFunctions.showWarningSnackBar(
+              'Choose a store to continue.',
+            );
+          }
+        },
+        child: _buildScaffold(context, mustPick),
+      );
+    });
+  }
+
+  Widget _buildScaffold(BuildContext context, bool mustPick) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
         toolbarHeight: AppResponsive.appBarHeight(context),
-        leading: IconButton(
-          onPressed: Get.back,
-          icon: Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-            size: AppResponsive.appBarIconSize(context),
-          ),
-        ),
+        automaticallyImplyLeading: false,
+        leading: mustPick
+            ? null
+            : IconButton(
+                onPressed: Get.back,
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: AppResponsive.appBarIconSize(context),
+                ),
+              ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,

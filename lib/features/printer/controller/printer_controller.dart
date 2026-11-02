@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,6 +49,18 @@ class PrinterController extends GetxController {
     _loadPrinters();
     _loadKitchenGroups();
     fetchKitchenGroups();
+    unawaited(autoConnectSavedPrinter());
+  }
+
+  /// Automatically connects to the previously configured default / physical printer on startup
+  Future<void> autoConnectSavedPrinter() async {
+    final target = receiptPrinter ??
+        printers.firstWhereOrNull((p) => p.isDefault || p.macAddress.isNotEmpty);
+    if (target != null && !target.isVirtual && target.macAddress.isNotEmpty) {
+      try {
+        await connectToPrinter(target);
+      } catch (_) {}
+    }
   }
 
   void _loadKitchenGroups() {
@@ -396,12 +409,6 @@ class PrinterController extends GetxController {
         styles: const PosStyles(align: PosAlign.center),
       ),
       ...generator.text('${ReceiptLabels.t('Order')}: $invoiceNumber'),
-      ...generator.text(
-        AppHelperFunctions.getFormattedDate(
-          dateTime,
-          format: 'dd MMM yyyy, hh:mm a',
-        ),
-      ),
       ...generator.text('${ReceiptLabels.t('Customer')}: $customerName'),
       ...generator.text('${ReceiptLabels.t('Payment')}: $paymentLabel'),
       for (final line in saleInfo) ...generator.text(line),
@@ -452,6 +459,18 @@ class PrinterController extends GetxController {
         ),
       ],
       ..._businessFooterBytes(generator),
+      ...generator.hr(),
+      ...generator.text(
+        AppHelperFunctions.getFormattedDate(
+          dateTime,
+          format: 'dd MMM yyyy, hh:mm a',
+        ),
+        styles: const PosStyles(align: PosAlign.center),
+      ),
+      ...generator.text(
+        'Receipt ID: ${orderId.isNotEmpty ? orderId : invoiceNumber}',
+        styles: const PosStyles(align: PosAlign.center),
+      ),
       ...generator.feed(2),
       if (printer.autoCut) ...generator.cut(),
     ];
@@ -498,12 +517,6 @@ class PrinterController extends GetxController {
         styles: const PosStyles(align: PosAlign.center, bold: true),
       ),
       ...generator.text('${ReceiptLabels.t('Order')}: $orderNumber'),
-      ...generator.text(
-        AppHelperFunctions.getFormattedDate(
-          dateTime,
-          format: 'dd MMM yyyy, hh:mm a',
-        ),
-      ),
       ...generator.text('${ReceiptLabels.t('Customer')}: $customerName'),
       for (final line in _saleInfoLines(
         branchName: StorageService.storeName,
@@ -531,6 +544,18 @@ class PrinterController extends GetxController {
           styles: const PosStyles(align: PosAlign.center, bold: true),
         ),
       ..._businessFooterBytes(generator),
+      ...generator.hr(),
+      ...generator.text(
+        AppHelperFunctions.getFormattedDate(
+          dateTime,
+          format: 'dd MMM yyyy, hh:mm a',
+        ),
+        styles: const PosStyles(align: PosAlign.center),
+      ),
+      ...generator.text(
+        'Receipt ID: $orderNumber',
+        styles: const PosStyles(align: PosAlign.center),
+      ),
       ...generator.feed(2),
       if (printer.autoCut) ...generator.cut(),
     ];
@@ -925,12 +950,6 @@ Virtual printer is ready.
       ..writeln(_businessHeaderPreview())
       ..writeln(ReceiptLabels.t('Receipt'))
       ..writeln('${ReceiptLabels.t('Order')}: $invoiceNumber')
-      ..writeln(
-        AppHelperFunctions.getFormattedDate(
-          dateTime,
-          format: 'dd MMM yyyy, hh:mm a',
-        ),
-      )
       ..writeln('${ReceiptLabels.t('Customer')}: $customerName')
       ..writeln('${ReceiptLabels.t('Payment')}: $paymentLabel')
       ..writeAll(saleInfo.map((line) => '$line\n'))
@@ -966,6 +985,15 @@ Virtual printer is ready.
     if (BusinessProfileService.footer.isNotEmpty) {
       output.writeln(BusinessProfileService.footer);
     }
+    output
+      ..writeln('--------------------------------')
+      ..writeln(
+        AppHelperFunctions.getFormattedDate(
+          dateTime,
+          format: 'dd MMM yyyy, hh:mm a',
+        ),
+      )
+      ..writeln('Receipt ID: ${orderId.isNotEmpty ? orderId : invoiceNumber}');
     return output.toString().trim();
   }
 

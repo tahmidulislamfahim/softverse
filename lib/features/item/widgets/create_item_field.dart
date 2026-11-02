@@ -12,6 +12,7 @@ class CreateItemField extends StatelessWidget {
   final String? helperText;
   final TextInputType? keyboardType;
   final Widget? suffixIcon;
+  final int maxLines;
 
   const CreateItemField({
     super.key,
@@ -21,6 +22,7 @@ class CreateItemField extends StatelessWidget {
     this.helperText,
     this.keyboardType,
     this.suffixIcon,
+    this.maxLines = 1,
   });
 
   @override
@@ -48,6 +50,7 @@ class CreateItemField extends StatelessWidget {
           textColor: AppColors.chipInactiveText,
           fontSize: 16.4,
           suffixIcon: suffixIcon,
+          maxLines: maxLines,
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,

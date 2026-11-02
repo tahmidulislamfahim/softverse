@@ -12,12 +12,14 @@ class CartItemCard extends StatelessWidget {
   final CartItem item;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
+  final ValueChanged<int>? onQuantityChanged;
 
   const CartItemCard({
     super.key,
     required this.item,
     required this.onIncrement,
     required this.onDecrement,
+    this.onQuantityChanged,
   });
 
   @override
@@ -58,6 +60,7 @@ class CartItemCard extends StatelessWidget {
                       quantity: item.quantity,
                       onIncrement: onIncrement,
                       onDecrement: onDecrement,
+                      onQuantityChanged: onQuantityChanged,
                     ),
                   ],
                 ),

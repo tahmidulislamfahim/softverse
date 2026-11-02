@@ -46,59 +46,137 @@ class InvoiceScreen extends GetView<InvoiceController> {
         ),
         title: Obx(
           () => Text(
-            'Invoice : ${controller.invoiceNumber.value}',
+            controller.invoiceNumber.value.isNotEmpty
+                ? controller.invoiceNumber.value
+                : 'Invoice',
             style: getTextStyle(
               fontSize: 16.4,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               color: Colors.white,
             ),
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: controller.openNotifications,
-            icon: Icon(Iconsax.notification, color: Colors.white, size: 26.sp),
-          ),
-          IconButton(
-            onPressed: controller.openMail,
-            icon: Icon(Iconsax.sms, color: Colors.white, size: 26.sp),
-          ),
-          Obx(
-            () => IconButton(
-              onPressed: controller.isPreparingPdf.value
-                  ? null
-                  : controller.exportPdf,
-              icon: controller.isPreparingPdf.value
-                  ? SizedBox(
-                      width: 20.sp,
-                      height: 20.sp,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Icon(
-                      Iconsax.document_download,
+          Obx(() {
+            if (controller.isRefunded) {
+              return Container(
+                margin: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Center(
+                  child: Text(
+                    'Refunded',
+                    style: getTextStyle(
+                      fontSize: 12.0,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      size: 26.sp,
                     ),
-            ),
+                  ),
+                ),
+              );
+            }
+            return Container(
+              margin: EdgeInsets.symmetric(vertical: 11.h, horizontal: 4.w),
+              child: TextButton(
+                onPressed: controller.goToRefund,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.dangerRed,
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                ),
+                child: const Text(
+                  'Refund',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+            );
+          }),
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: Colors.white, size: iconSize),
+            tooltip: 'Invoice actions',
+            onSelected: (value) {
+              switch (value) {
+                case 'print':
+                  controller.openPrint();
+                  break;
+                case 'email':
+                  controller.openMail();
+                  break;
+                case 'download':
+                  controller.exportPdf();
+                  break;
+                case 'collect_due':
+                  _showCollectDuePaymentDialog(context, controller);
+                  break;
+                case 'mark_empty':
+                  controller.markTableEmpty();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'print',
+                child: Row(
+                  children: [
+                    Icon(Iconsax.printer, size: 20),
+                    SizedBox(width: 10),
+                    Text('Print Receipt'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'email',
+                child: Row(
+                  children: [
+                    Icon(Iconsax.sms, size: 20),
+                    SizedBox(width: 10),
+                    Text('Email / Share'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'download',
+                child: Row(
+                  children: [
+                    Icon(Iconsax.document_download, size: 20),
+                    SizedBox(width: 10),
+                    Text('Download PDF'),
+                  ],
+                ),
+              ),
+              if (controller.canCollectDuePayment)
+                const PopupMenuItem(
+                  value: 'collect_due',
+                  child: Row(
+                    children: [
+                      Icon(Iconsax.card_tick, size: 20),
+                      SizedBox(width: 10),
+                      Text('Collect Due Payment'),
+                    ],
+                  ),
+                ),
+              if ((controller.tableId.value ?? '').isNotEmpty)
+                const PopupMenuItem(
+                  value: 'mark_empty',
+                  child: Row(
+                    children: [
+                      Icon(Icons.table_restaurant, size: 20),
+                      SizedBox(width: 10),
+                      Text('Mark Table Empty'),
+                    ],
+                  ),
+                ),
+            ],
           ),
-          IconButton(
-            onPressed: controller.openPrint,
-            icon: Obx(
-              () => controller.isPrinting.value
-                  ? SizedBox(
-                      width: 20.sp,
-                      height: 20.sp,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Icon(Iconsax.printer, color: Colors.white, size: 26.sp),
-            ),
-          ),
+          SizedBox(width: 6.w),
         ],
       ),
       body: SafeArea(
@@ -112,14 +190,30 @@ class InvoiceScreen extends GetView<InvoiceController> {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Purchase Item',
-                    style: getTextStyle(
-                      fontSize: 16.4,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.authTextDark,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Purchase Item',
+                        style: getTextStyle(
+                          fontSize: 16.4,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.authTextDark,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Obx(
+                        () => Text(
+                          controller.formattedDateTime,
+                          style: getTextStyle(
+                            fontSize: 12.0,
+                            color: AppColors.chipInactiveText,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   Obx(
                     () => PaymentTypeBadge(
@@ -181,89 +275,14 @@ class InvoiceScreen extends GetView<InvoiceController> {
                       )
                     : const SizedBox.shrink(),
               ),
-              Obx(
-                () => PrimaryButton(
-                  label: 'Print Receipt',
-                  onPressed: controller.openPrint,
-                  isLoading: controller.isPrinting.value,
-                  backgroundColor: AppColors.onboardingBackground,
-                  textColor: Colors.white,
-                  height: 55,
-                  fontSize: 16.4,
-                  borderRadius: 12,
-                ),
-              ),
-              SizedBox(height: 22.h),
-              Obx(
-                () => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (controller.isRefunded)
-                      PrimaryButton(
-                        label: 'Refunded',
-                        onPressed: null,
-                        backgroundColor: AppColors.fieldBackground,
-                        textColor: AppColors.dangerRed,
-                        width: 124.w,
-                        height: 51,
-                        fontSize: 16.4,
-                        borderRadius: 999,
-                      )
-                    else
-                      PrimaryButton(
-                        label: 'Refund',
-                        onPressed: controller.goToRefund,
-                        backgroundColor: Colors.white,
-                        textColor: AppColors.dangerRed,
-                        borderColor: AppColors.dangerRed,
-                        width: 109.w,
-                        height: 51,
-                        fontSize: 16.4,
-                        borderRadius: 999,
-                      ),
-                    if ((controller.tableId.value ?? '').isNotEmpty) ...[
-                      SizedBox(width: 12.w),
-                      PrimaryButton(
-                        label: 'Mark Empty',
-                        onPressed: controller.markTableEmpty,
-                        isLoading: controller.isClearingTable.value,
-                        loadingLabel: 'Clearing...',
-                        backgroundColor: Colors.white,
-                        textColor: AppColors.onboardingBackground,
-                        borderColor: AppColors.onboardingBackground,
-                        width: 150.w,
-                        height: 51,
-                        fontSize: 14.6,
-                        borderRadius: 999,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              SizedBox(height: 14.h),
-              Obx(
-                () => PrimaryButton(
-                  label: 'View PDF',
-                  onPressed: controller.exportPdf,
-                  isLoading: controller.isPreparingPdf.value,
-                  loadingLabel: 'Preparing...',
-                  backgroundColor: AppColors.onboardingBackground,
-                  textColor: Colors.white,
-                  height: 51,
-                  fontSize: 16.4,
-                  borderRadius: 999,
-                ),
-              ),
-              SizedBox(height: 12.h),
               PrimaryButton(
-                label: 'Return Home',
+                label: 'Done / Return Home',
                 onPressed: controller.returnHome,
-                backgroundColor: Colors.white,
-                textColor: AppColors.onboardingBackground,
-                borderColor: AppColors.onboardingBackground,
+                backgroundColor: AppColors.onboardingBackground,
+                textColor: Colors.white,
                 height: 51,
                 fontSize: 16.4,
-                borderRadius: 999,
+                borderRadius: 12,
               ),
             ],
           ),

@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../../../../core/common/widgets/app_nav_drawer.dart';
+import '../../../../core/common/widgets/primary_button.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../../core/common/widgets/floating_icon_button.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
@@ -12,7 +14,6 @@ import '../../../customer/controller/customer_controller.dart';
 import '../../controller/checkout_controller.dart';
 import '../../widgets/bill_summary_card.dart';
 import '../../widgets/cart_item_card.dart';
-import '../../widgets/checkout_action_buttons.dart';
 import '../../widgets/loyalty_points_tile.dart';
 import '../../widgets/modifier_discount_toggle.dart';
 import '../../widgets/payment_method_grid.dart';
@@ -59,20 +60,95 @@ class CheckoutScreen extends GetView<CheckoutController> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: controller.closeCheckout,
-            icon: Icon(Iconsax.close_circle, color: Colors.white, size: iconSize),
-          ),
-          IconButton(
-            onPressed: controller.openPendingOrders,
-            icon: Icon(Iconsax.clock, color: Colors.white, size: iconSize),
-          ),
-          SizedBox(width: isDualPane ? 8 : 15.w),
-          Icon(Iconsax.notification, color: Colors.white, size: iconSize),
-          IconButton(
-            onPressed: controller.printEstimate,
-            icon: Icon(Iconsax.printer, color: Colors.white, size: iconSize),
-            tooltip: 'Print estimate',
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: Colors.white, size: iconSize),
+            tooltip: 'Order actions',
+            onSelected: (value) {
+              switch (value) {
+                case 'estimate':
+                  controller.printEstimate();
+                  break;
+                case 'pending':
+                  controller.openPendingOrders();
+                  break;
+                case 'save':
+                  controller.saveOrder();
+                  break;
+                case 'table':
+                  controller.sendToTable();
+                  break;
+                case 'clear':
+                  controller.discardActiveOrder();
+                  break;
+                case 'close':
+                  controller.closeCheckout();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'estimate',
+                child: Row(
+                  children: [
+                    Icon(Iconsax.printer, size: 20),
+                    SizedBox(width: 10),
+                    Text('Print Estimate / Receipt'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'pending',
+                child: Row(
+                  children: [
+                    Icon(Iconsax.clock, size: 20),
+                    SizedBox(width: 10),
+                    Text('Pending Orders'),
+                  ],
+                ),
+              ),
+              if (controller.isOpenOrderEnabled)
+                const PopupMenuItem(
+                  value: 'save',
+                  child: Row(
+                    children: [
+                      Icon(Iconsax.save_2, size: 20),
+                      SizedBox(width: 10),
+                      Text('Save Order'),
+                    ],
+                  ),
+                ),
+              if (controller.isTableOptionsEnabled)
+                const PopupMenuItem(
+                  value: 'table',
+                  child: Row(
+                    children: [
+                      Icon(Icons.table_restaurant, size: 20),
+                      SizedBox(width: 10),
+                      Text('Send to Table'),
+                    ],
+                  ),
+                ),
+              const PopupMenuItem(
+                value: 'clear',
+                child: Row(
+                  children: [
+                    Icon(Iconsax.trash, color: AppColors.dangerRed, size: 20),
+                    SizedBox(width: 10),
+                    Text('Clear / Discard Order', style: TextStyle(color: AppColors.dangerRed)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'close',
+                child: Row(
+                  children: [
+                    Icon(Iconsax.close_circle, size: 20),
+                    SizedBox(width: 10),
+                    Text('Close Checkout'),
+                  ],
+                ),
+              ),
+            ],
           ),
           SizedBox(width: 6.w),
         ],
@@ -332,6 +408,8 @@ class CheckoutScreen extends GetView<CheckoutController> {
                       controller.incrementQuantity(i),
                   onDecrement: () =>
                       controller.decrementQuantity(i),
+                  onQuantityChanged: (newQty) =>
+                      controller.setItemQuantity(i, newQty),
                 ),
                 if (i == 0) ...[
                   SizedBox(height: 12.h),
@@ -395,16 +473,7 @@ class CheckoutScreen extends GetView<CheckoutController> {
           ),
         ),
         SizedBox(height: 22.h),
-        Obx(
-          () => CheckoutActionButtons(
-            onSendToTable: controller.sendToTable,
-            onSaveOrder: controller.saveOrder,
-            onClearOrder: controller.discardActiveOrder,
-            showSaveOrder: controller.isOpenOrderEnabled,
-            showSendToTable: controller.isTableOptionsEnabled,
-          ),
-        ),
-        SizedBox(height: 22.h),
+        SizedBox(height: 16.h),
         Text(
           'Payment Method',
           style: getTextStyle(
@@ -418,9 +487,30 @@ class CheckoutScreen extends GetView<CheckoutController> {
           final methods = controller.visiblePaymentMethods;
           return PaymentMethodGrid(
             methods: methods,
-            selectedKey:
-                controller.selectedPaymentMethod.value,
+            selectedKey: controller.selectedPaymentMethod.value,
             onSelected: controller.selectPaymentMethod,
+          );
+        }),
+        SizedBox(height: 20.h),
+        Obx(() {
+          final methodKey = controller.selectedPaymentMethod.value;
+          final method = controller.visiblePaymentMethods.firstWhereOrNull((m) => m.key == methodKey) ??
+              (controller.visiblePaymentMethods.isNotEmpty ? controller.visiblePaymentMethods.first : null);
+          return PrimaryButton(
+            label: 'Charge ${AppHelperFunctions.formatCurrency(controller.totalAmount)}',
+            onPressed: () {
+              if (method != null) {
+                controller.selectPaymentMethod(method);
+              }
+            },
+            isLoading: controller.isSubmittingCheckout.value,
+            loadingLabel: 'Charging...',
+            height: 52,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            gradient: const LinearGradient(
+              colors: [AppColors.gradientStart, AppColors.gradientEnd],
+            ),
           );
         }),
         SizedBox(height: 16.h),

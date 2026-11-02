@@ -145,28 +145,24 @@ class InvoicePdfExporter {
       businessName,
       if (businessAddress.isNotEmpty) businessAddress,
       if (businessPhone.isNotEmpty) '${l('Tel')}: $businessPhone',
+      if (BusinessProfileService.header.isNotEmpty) BusinessProfileService.header,
+      '--------------------------------',
       '${l('Invoice')}: $invoiceNumber',
-      AppHelperFunctions.getFormattedDate(
-        dateTime,
-        format: 'dd MMM yyyy, hh:mm a',
-      ),
       '${l('Customer')}: $customerName',
       '${l('Payment')}: $paymentLabel',
       ...saleInfo,
-      '',
+      '--------------------------------',
       l('Items'),
       for (final item in items) ...[
         '${item.name}  x${item.quantity}    ${BusinessProfileService.printCurrencySymbol}${AppHelperFunctions.getFormattedMoney(item.price * item.quantity)}',
         '  @ ${BusinessProfileService.printCurrencySymbol}${AppHelperFunctions.getFormattedMoney(item.price)}',
       ],
-      '',
+      '--------------------------------',
       '${l('Subtotal')}: ${BusinessProfileService.printCurrencySymbol}${AppHelperFunctions.getFormattedMoney(subtotal)}',
       if (discount > 0)
         '${l('Discount')}: -${BusinessProfileService.printCurrencySymbol}${AppHelperFunctions.getFormattedMoney(discount)}',
       '${l('Tax')}: ${BusinessProfileService.printCurrencySymbol}${AppHelperFunctions.getFormattedMoney(tax)}',
       '${l('Total')}: ${BusinessProfileService.printCurrencySymbol}${AppHelperFunctions.getFormattedMoney(totalAmount)}',
-      // A due/credit sale hasn't actually received anything yet - showing
-      // "Amount Received"/"Change" on it would make it look already paid.
       if (isDue) ...[
         if (amountReceived > 0)
           '${l('Paid so far')}: ${BusinessProfileService.printCurrencySymbol}${AppHelperFunctions.getFormattedMoney(amountReceived)}',
@@ -175,6 +171,14 @@ class InvoicePdfExporter {
         '${l('Received', 'Amount Received')}: ${BusinessProfileService.printCurrencySymbol}${AppHelperFunctions.getFormattedMoney(amountReceived)}',
         '${l('Change', 'Change to Return')}: ${BusinessProfileService.printCurrencySymbol}${AppHelperFunctions.getFormattedMoney(changeToReturn)}',
       ],
+      '--------------------------------',
+      if (BusinessProfileService.footer.isNotEmpty) BusinessProfileService.footer,
+      '--------------------------------',
+      AppHelperFunctions.getFormattedDate(
+        dateTime,
+        format: 'dd MMM yyyy, hh:mm a',
+      ),
+      'Receipt ID: $invoiceNumber',
     ];
 
     final content = StringBuffer()

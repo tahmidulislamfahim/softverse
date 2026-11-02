@@ -244,6 +244,17 @@ class CheckoutController extends GetxController {
     _syncCds();
   }
 
+  void setItemQuantity(int index, int newQuantity) {
+    if (index < 0 || index >= cartItems.length) return;
+    if (newQuantity <= 0) {
+      cartItems.removeAt(index);
+    } else {
+      cartItems[index] = cartItems[index].copyWith(quantity: newQuantity);
+    }
+    _syncAmountReceivedWithTotal();
+    _syncCds();
+  }
+
   void selectModifier() =>
       priceAdjustmentMode.value = PriceAdjustmentMode.modifier;
 
@@ -766,31 +777,43 @@ class CheckoutController extends GetxController {
       final order = response.responseData is Map
           ? Map<String, dynamic>.from(response.responseData as Map)
           : <String, dynamic>{};
-      await fetchOrders();
-      // Points earned/used on this sale show on the customer right away.
-      if (selectedCustomerId.value.isNotEmpty &&
-          Get.isRegistered<CustomerController>()) {
-        unawaited(Get.find<CustomerController>().fetchCustomers());
-      }
-      if (Get.isRegistered<HomeController>()) {
-        await Get.find<HomeController>().fetchTables();
-      }
-      if (Get.isRegistered<TransactionController>()) {
-        await Get.find<TransactionController>().fetchTransactions();
-      }
-      await _sendToKdsIfEnabled(
-        order: order,
-        saveOrder: saveOrder,
-        sendToTable: sendToTable,
-        tableId: tableId,
-        tableName: tableName,
-      );
-      // Kitchen tickets go out once per order: when it's sent to a table,
-      // or when a new counter sale is paid straight away. Paying an order
-      // that was already sent must not re-print it.
-      if (sendToTable || (!saveOrder && currentOrderId == null)) {
-        await _printKitchenTicketsIfEnabled(order: order, tableName: tableName);
-      }
+      // Run background refreshes, KDS broadcast, and kitchen printing non-blocking
+      // so the cashier immediately sees the invoice or confirmation.
+      unawaited(() async {
+        try {
+          await fetchOrders();
+        } catch (_) {}
+        if (selectedCustomerId.value.isNotEmpty &&
+            Get.isRegistered<CustomerController>()) {
+          try {
+            await Get.find<CustomerController>().fetchCustomers();
+          } catch (_) {}
+        }
+        if (Get.isRegistered<HomeController>()) {
+          try {
+            await Get.find<HomeController>().fetchTables();
+          } catch (_) {}
+        }
+        if (Get.isRegistered<TransactionController>()) {
+          try {
+            await Get.find<TransactionController>().fetchTransactions();
+          } catch (_) {}
+        }
+        try {
+          await _sendToKdsIfEnabled(
+            order: order,
+            saveOrder: saveOrder,
+            sendToTable: sendToTable,
+            tableId: tableId,
+            tableName: tableName,
+          );
+        } catch (_) {}
+        if (sendToTable || (!saveOrder && currentOrderId == null)) {
+          try {
+            await _printKitchenTicketsIfEnabled(order: order, tableName: tableName);
+          } catch (_) {}
+        }
+      }());
       if (!saveOrder && !sendToTable) {
         if (FeatureSettings.isEnabled('customer_displays')) {
           _cdsCartSender.complete(_cdsCartSnapshot(paid: true));

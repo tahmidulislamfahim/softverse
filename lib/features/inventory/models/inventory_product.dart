@@ -4,6 +4,7 @@ class InventoryProduct {
   final String? id;
   final String? categoryName;
   final String name;
+  final String description;
   final String sku;
   final String soldBy;
   final double price;
@@ -25,6 +26,7 @@ class InventoryProduct {
     this.id,
     this.categoryName,
     required this.name,
+    this.description = '',
     required this.sku,
     this.soldBy = 'pcs',
     required this.price,
@@ -151,6 +153,8 @@ class InventoryProduct {
       id: json['id']?.toString() ?? fallback?.id,
       categoryName: json['categoryName']?.toString() ?? fallback?.categoryName,
       name: json['name']?.toString() ?? fallback?.name ?? 'Unnamed Item',
+      description:
+          json['description']?.toString() ?? fallback?.description ?? '',
       sku: json['sku']?.toString() ?? fallback?.sku ?? '',
       soldBy: json['soldBy']?.toString() ?? fallback?.soldBy ?? 'pcs',
       price:

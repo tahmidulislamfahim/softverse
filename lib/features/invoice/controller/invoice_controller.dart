@@ -118,13 +118,20 @@ class InvoiceController extends GetxController {
   bool get canCollectDuePayment =>
       _isCreditSale && amountDue > 0 && !isRefunded;
 
+  String get formattedDateTime {
+    final dt = orderCreatedAt.value ?? DateTime.now();
+    return AppHelperFunctions.getFormattedDate(dt, format: 'dd MMM yyyy, hh:mm a');
+  }
+
   void loadFromOrder(
     Map<String, dynamic> order, {
     String? fallbackTableId,
     String? fallbackTableName,
   }) {
     invoiceNumber.value =
-        order['orderNumber']?.toString() ?? invoiceNumber.value;
+        order['invoiceNumber']?.toString() ??
+        order['orderNumber']?.toString() ??
+        invoiceNumber.value;
     checkoutOrderId.value = _cleanText(order['id']);
     orderCreatedAt.value = DateTime.tryParse(
       order['createdAt']?.toString() ?? '',

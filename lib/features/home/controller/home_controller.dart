@@ -254,6 +254,7 @@ class HomeController extends GetxController {
     final mapped = data.whereType<Map>().map((entry) {
       return Product.fromApi(Map<String, dynamic>.from(entry));
     }).toList();
+    mapped.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     products.assignAll(mapped);
   }
 

@@ -8,6 +8,7 @@ import '../../../../core/common/widgets/app_text_field.dart';
 import '../../../../core/common/widgets/primary_button.dart';
 import '../../../../core/services/feature_settings.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../inventory/widgets/date_field_row.dart';
 import '../../../inventory/widgets/toggle_field_row.dart';
@@ -97,6 +98,8 @@ class CreateItemScreen extends GetView<CreateItemController> {
                   label: 'Description',
                   controller: controller.descriptionController,
                   hintText: 'Item description',
+                  maxLines: 3,
+                  keyboardType: TextInputType.multiline,
                 ),
                 SizedBox(height: 24.h),
                 GestureDetector(
@@ -164,8 +167,8 @@ class CreateItemScreen extends GetView<CreateItemController> {
                 CreateItemField(
                   label: 'Price',
                   controller: controller.priceController,
-                  hintText: '\$0.00',
-                  keyboardType: TextInputType.number,
+                  hintText: AppHelperFunctions.formatCurrency(0),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   helperText:
                       'To indicate the price upon sale, leave the field blank',
                 ),
@@ -173,8 +176,8 @@ class CreateItemScreen extends GetView<CreateItemController> {
                 CreateItemField(
                   label: 'Cost',
                   controller: controller.costController,
-                  hintText: '\$0.00',
-                  keyboardType: TextInputType.number,
+                  hintText: AppHelperFunctions.formatCurrency(0),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 ),
                 SizedBox(height: 24.h),
                 CreateItemField(
@@ -239,13 +242,13 @@ class CreateItemScreen extends GetView<CreateItemController> {
                             CreateItemField(
                               label: 'In Stock',
                               controller: controller.inStockController,
-                              keyboardType: TextInputType.number,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             ),
                             SizedBox(height: 24.h),
                             CreateItemField(
                               label: 'Low Stock',
                               controller: controller.lowStockController,
-                              keyboardType: TextInputType.number,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               helperText:
                                   'Quantity at which you will be notified about low stock',
                             ),
@@ -324,7 +327,7 @@ class CreateItemScreen extends GetView<CreateItemController> {
                                           label: 'Expiration alert quantity',
                                           controller: controller
                                               .expirationAlertQuantityController,
-                                          keyboardType: TextInputType.number,
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                           helperText:
                                               'Quantity at which you will be notified about the expiration date',
                                         ),
@@ -518,13 +521,13 @@ class _StoreInventorySection extends StatelessWidget {
                   CreateItemField(
                     label: 'In stock',
                     controller: store.inStockController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                   SizedBox(height: 12.h),
                   CreateItemField(
                     label: 'Low stock',
                     controller: store.lowStockController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                 ],
               ],
@@ -573,13 +576,13 @@ class _CompositeItemSection extends StatelessWidget {
                   CreateItemField(
                     label: 'Quantity',
                     controller: entry.value.quantityController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                   SizedBox(height: 12.h),
                   CreateItemField(
                     label: 'Cost',
                     controller: entry.value.costController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                 ],
               ),
@@ -675,13 +678,13 @@ class _VariantsSection extends StatelessWidget {
                 CreateItemField(
                   label: 'Price',
                   controller: entry.value.priceController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 ),
                 SizedBox(height: 12.h),
                 CreateItemField(
                   label: 'Cost',
                   controller: entry.value.costController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 ),
                 SizedBox(height: 12.h),
                 CreateItemField(

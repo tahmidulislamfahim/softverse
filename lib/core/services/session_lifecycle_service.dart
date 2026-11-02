@@ -24,6 +24,20 @@ class SessionLifecycleService {
 
   static bool _isEndingSession = false;
 
+  /// Set while the user is signing out, and remembered briefly afterwards:
+  /// requests already in flight (heartbeat, list refreshes, the logout call
+  /// itself) come back 401 once the tokens are gone, and that "Unauthorized"
+  /// must not be shown to someone who just chose to sign out.
+  static bool isSigningOut = false;
+  static DateTime? _signedOutAt;
+
+  static bool get suppressAuthErrors =>
+      isSigningOut ||
+      _isEndingSession ||
+      (_signedOutAt != null &&
+          DateTime.now().difference(_signedOutAt!) <
+              const Duration(seconds: 10));
+
   static Future<void> endSession({bool navigateToLogin = true}) async {
     if (_isEndingSession) return;
     _isEndingSession = true;
@@ -53,6 +67,7 @@ class SessionLifecycleService {
         Get.offAllNamed(AppRoute.getLoginScreen());
       }
     } finally {
+      _signedOutAt = DateTime.now();
       _isEndingSession = false;
     }
   }
