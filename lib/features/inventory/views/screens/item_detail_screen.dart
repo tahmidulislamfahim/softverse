@@ -49,12 +49,14 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
             ),
           ),
         ),
-        title: Text(
-          controller.product.name,
-          style: getTextStyle(
-            fontSize: AppResponsive.appBarTitleSize(context),
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
+        title: Obx(
+          () => Text(
+            controller.product.name,
+            style: getTextStyle(
+              fontSize: AppResponsive.appBarTitleSize(context),
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
           ),
         ),
         actions: [
@@ -74,129 +76,127 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
           padding: EdgeInsets.all(16.w),
           child: ResponsiveCenter(
             maxWidth: 560,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(height: 16.h),
-              Center(
-                child: ProductImage(
-                  imageUrl: controller.product.imageUrl,
-                  size: 109,
-                  borderRadius: 12,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Text(
-                controller.product.name,
-                textAlign: TextAlign.center,
-                style: getTextStyle(
-                  fontSize: 14.6,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.authTextDark,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                controller.product.sku,
-                textAlign: TextAlign.center,
-                style: getTextStyle(
-                  fontSize: 12.8,
-                  color: AppColors.onboardingBackground,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              LabeledRow(label: 'Sold by', value: controller.soldBy),
-              LabeledRow(
-                label: 'Price',
-                value:
-                    AppHelperFunctions.formatCurrency(controller.product.price),
-              ),
-              LabeledRow(
-                label: 'Cost',
-                value:
-                    AppHelperFunctions.formatCurrency(controller.product.cost),
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
+            child: Obx(
+              () {
+                final product = controller.product;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: 16.h),
+                    Center(
+                      child: ProductImage(
+                        imageUrl: product.imageUrl,
+                        size: 109,
+                        borderRadius: 12,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      product.name,
+                      textAlign: TextAlign.center,
+                      style: getTextStyle(
+                        fontSize: 14.6,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.authTextDark,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      product.sku,
+                      textAlign: TextAlign.center,
+                      style: getTextStyle(
+                        fontSize: 12.8,
+                        color: AppColors.onboardingBackground,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    LabeledRow(
+                      label: 'Sold by',
+                      value: controller.soldBy.value,
+                    ),
+                    LabeledRow(
+                      label: 'Price',
+                      value: AppHelperFunctions.formatCurrency(product.price),
+                    ),
+                    LabeledRow(
+                      label: 'Cost',
+                      value: AppHelperFunctions.formatCurrency(product.cost),
+                    ),
+                    SizedBox(height: 10.h),
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Barcode',
-                          style: getTextStyle(
-                            fontSize: 16.4,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.onboardingBackground,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Barcode',
+                                style: getTextStyle(
+                                  fontSize: 16.4,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.onboardingBackground,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                product.barcode,
+                                style: getTextStyle(
+                                  fontSize: 12.8,
+                                  color: AppColors.authTextDark,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          controller.product.barcode,
-                          style: getTextStyle(
-                            fontSize: 12.8,
-                            color: AppColors.authTextDark,
-                          ),
-                        ),
+                        const BarcodeGraphic(),
                       ],
                     ),
-                  ),
-                  const BarcodeGraphic(),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              LabeledRow(
-                label: 'Stock tracking',
-                value: controller.product.trackStock ? 'On' : 'Off',
-              ),
-              if (controller.product.trackStock) ...[
-                LabeledRow(
-                  label: 'Stock status',
-                  value: controller.product.stockLabel,
-                ),
-                LabeledRow(
-                  label: 'Low stock threshold',
-                  value: '${controller.product.lowStockThreshold}',
-                ),
-              ],
-              SizedBox(height: 16.h),
-              Obx(
-                () => ModifierSection(
-                  group: controller.modifierGroup,
-                  enabled: controller.modifierEnabled.value,
-                  onEnabledChanged: (_) => controller.toggleModifier(),
-                  selectedOptionIndex:
-                      controller.selectedModifierOptionIndex.value,
-                  onOptionSelected: controller.selectModifierOption,
-                ),
-              ),
-              Obx(
-                () =>
-                    FeatureSettings.isEnabled('product_expiration_information')
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(height: 16.h),
-                          Text(
-                            'Expire Date',
-                            style: getTextStyle(
-                              fontSize: 16.4,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.onboardingBackground,
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Obx(
-                            () => ToggleFieldRow(
-                              label: 'Track Date',
-                              value: controller.trackExpiryDate.value,
-                              onChanged: (_) =>
-                                  controller.toggleTrackExpiryDate(),
-                              boxed: true,
-                            ),
-                          ),
+                    SizedBox(height: 10.h),
+                    LabeledRow(
+                      label: 'Stock tracking',
+                      value: product.trackStock ? 'On' : 'Off',
+                    ),
+                    if (product.trackStock) ...[
+                      LabeledRow(
+                        label: 'Stock status',
+                        value: product.stockLabel,
+                      ),
+                      LabeledRow(
+                        label: 'Low stock threshold',
+                        value: '${product.lowStockThreshold}',
+                      ),
+                    ],
+                    SizedBox(height: 16.h),
+                    ModifierSection(
+                      group: controller.modifierGroup.value,
+                      enabled: controller.modifierEnabled.value,
+                      onEnabledChanged: (_) => controller.toggleModifier(),
+                      selectedOptionIndex:
+                          controller.selectedModifierOptionIndex.value,
+                      onOptionSelected: controller.selectModifierOption,
+                    ),
+                    if (FeatureSettings.isEnabled(
+                      'product_expiration_information',
+                    )) ...[
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Expire Date',
+                        style: getTextStyle(
+                          fontSize: 16.4,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.onboardingBackground,
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      ToggleFieldRow(
+                        label: 'Track Date',
+                        value: controller.trackExpiryDate.value,
+                        onChanged: (_) => controller.toggleTrackExpiryDate(),
+                        boxed: true,
+                      ),
+                      if (controller.trackExpiryDate.value) ...[
+                        if (controller.manufacturingDate.value.isNotEmpty) ...[
                           SizedBox(height: 16.h),
                           Text(
                             'Manufacturing Date',
@@ -207,7 +207,11 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
                             ),
                           ),
                           SizedBox(height: 8.h),
-                          DateFieldRow(value: controller.manufacturingDate),
+                          DateFieldRow(
+                            value: controller.manufacturingDate.value,
+                          ),
+                        ],
+                        if (controller.expireDate.value.isNotEmpty) ...[
                           SizedBox(height: 16.h),
                           Text(
                             'Expire Date',
@@ -218,33 +222,41 @@ class ItemDetailScreen extends GetView<ItemDetailController> {
                             ),
                           ),
                           SizedBox(height: 8.h),
-                          DateFieldRow(value: controller.expireDate),
-                          SizedBox(height: 8.h),
-                          Text(
-                            'Quantity at which you will be notified about Expire Date',
-                            style: getTextStyle(
-                              fontSize: 12.8,
-                              color: AppColors.chipInactiveText,
-                            ),
+                          DateFieldRow(value: controller.expireDate.value),
+                        ],
+                        if (controller.expirationAlertQuantity.value !=
+                            null) ...[
+                          SizedBox(height: 12.h),
+                          LabeledRow(
+                            label: 'Expiration alert quantity',
+                            value:
+                                '${controller.expirationAlertQuantity.value}',
                           ),
                         ],
-                      )
-                    : const SizedBox.shrink(),
-              ),
-              SizedBox(height: 16.h),
-              Obx(
-                () => ToggleFieldRow(
-                  label: 'Activity',
-                  value: controller.activityEnabled.value,
-                  onChanged: (_) => controller.toggleActivity(),
-                ),
-              ),
-              SizedBox(height: 16.h),
-            ],
+                        SizedBox(height: 8.h),
+                        Text(
+                          'Quantity at which you will be notified about Expire Date',
+                          style: getTextStyle(
+                            fontSize: 12.8,
+                            color: AppColors.chipInactiveText,
+                          ),
+                        ),
+                      ],
+                    ],
+                    SizedBox(height: 16.h),
+                    ToggleFieldRow(
+                      label: 'Activity',
+                      value: controller.activityEnabled.value,
+                      onChanged: (_) => controller.toggleActivity(),
+                    ),
+                    SizedBox(height: 16.h),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }

@@ -33,88 +33,95 @@ class ModifierSection extends StatelessWidget {
           value: enabled,
           onChanged: onEnabledChanged,
         ),
-        SizedBox(height: 12.h),
-        ...List.generate(group.options.length, (index) {
-          final option = group.options[index];
-          final selected = index == selectedOptionIndex;
-          return Padding(
-            padding: EdgeInsets.only(bottom: 12.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                GestureDetector(
-                  onTap: () => onOptionSelected(index),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 14.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.chipBackground,
-                      border: Border.all(color: AppColors.cardBorder),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          option.label,
-                          style: getTextStyle(
-                            fontSize: 16.4,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.chipInactiveText,
-                          ),
-                        ),
-                        _RadioCircle(selected: selected),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 12.h,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Column(
-                    children: option.products
-                        .map(
-                          (product) => Padding(
-                            padding: EdgeInsets.symmetric(vertical: 4.h),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  product.name,
-                                  style: getTextStyle(
-                                    fontSize: 16.4,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.onboardingBackground,
-                                  ),
-                                ),
-                                Text(
-                                  AppHelperFunctions.formatCurrency(product.price),
-                                  style: getTextStyle(
-                                    fontSize: 16.4,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.onboardingBackground,
-                                  ),
-                                ),
-                              ],
+        if (enabled && group.options.isNotEmpty) ...[
+          SizedBox(height: 12.h),
+          ...List.generate(group.options.length, (index) {
+            final option = group.options[index];
+            final selected = index == selectedOptionIndex;
+            return Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GestureDetector(
+                    onTap: () => onOptionSelected(index),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 14.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.chipBackground,
+                        border: Border.all(color: AppColors.cardBorder),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            option.label,
+                            style: getTextStyle(
+                              fontSize: 16.4,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.chipInactiveText,
                             ),
                           ),
-                        )
-                        .toList(),
+                          _RadioCircle(selected: selected),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
-        }),
+                  if (option.products.isNotEmpty) ...[
+                    SizedBox(height: 8.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.cardBorder),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Column(
+                        children: option.products
+                            .map(
+                              (product) => Padding(
+                                padding: EdgeInsets.symmetric(vertical: 4.h),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      product.name,
+                                      style: getTextStyle(
+                                        fontSize: 16.4,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.onboardingBackground,
+                                      ),
+                                    ),
+                                    Text(
+                                      AppHelperFunctions.formatCurrency(
+                                        product.price,
+                                      ),
+                                      style: getTextStyle(
+                                        fontSize: 16.4,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.onboardingBackground,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }),
+        ],
       ],
     );
   }
