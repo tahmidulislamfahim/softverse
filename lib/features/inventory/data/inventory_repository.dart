@@ -20,12 +20,11 @@ class HttpInventoryRepository implements InventoryRepository {
     final query = {
       'storeId': ?StorageService.storeId,
       'stockStatus': ?stockStatus,
+      'limit': '1000',
     };
     final uri = Uri.parse(ApiConstants.inventory);
     return _networkCaller.getRequest(
-      query.isEmpty
-          ? uri.toString()
-          : uri.replace(queryParameters: query).toString(),
+      uri.replace(queryParameters: query).toString(),
     );
   }
 

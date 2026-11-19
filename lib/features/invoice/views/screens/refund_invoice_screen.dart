@@ -73,63 +73,66 @@ class RefundInvoiceScreen extends GetView<InvoiceController> {
             maxWidth: 580,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Obx(
-                () => OrderSummaryBanner(
-                  invoiceLabel: 'Invoice : ${controller.invoiceNumber.value}',
-                  itemCount: 1,
-                  price: controller.refundAmount,
+              children: [
+                Obx(
+                  () => OrderSummaryBanner(
+                    invoiceLabel: 'Invoice : ${controller.invoiceNumber.value}',
+                    itemCount: controller.displayedRefundedItems.fold(
+                      0,
+                      (sum, item) => sum + item.quantity,
+                    ),
+                    price: controller.displayedRefundTotal,
+                  ),
                 ),
-              ),
-              SizedBox(height: 16.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Refund Item',
-                    style: getTextStyle(
-                      fontSize: 16.4,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.authTextDark,
+                SizedBox(height: 16.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Refund Item',
+                      style: getTextStyle(
+                        fontSize: 16.4,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.authTextDark,
+                      ),
                     ),
-                  ),
-                  Obx(
-                    () => PaymentTypeBadge(
-                      paymentType: controller.paymentType.value,
+                    Obx(
+                      () => PaymentTypeBadge(
+                        paymentType: controller.paymentType.value,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-              Obx(
-                () => Column(
-                  children: controller.items
-                      .map(
-                        (item) => Padding(
-                          padding: EdgeInsets.only(bottom: 10.h),
-                          child: _Row(
-                            label: '${item.name} x${item.quantity}',
-                            value: item.price * item.quantity,
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                Obx(
+                  () => Column(
+                    children: controller.displayedRefundedItems
+                        .map(
+                          (item) => Padding(
+                            padding: EdgeInsets.only(bottom: 10.h),
+                            child: _Row(
+                              label: '${item.name} x${item.quantity}',
+                              value: item.price * item.quantity,
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-              SizedBox(height: 16.h),
-              GestureDetector(
-                onTap: controller.viewOriginalInvoice,
-                child: Text(
-                  'View Original Invoice : ${controller.invoiceNumber.value}',
-                  style: getTextStyle(
-                    fontSize: 12.8,
-                    color: AppColors.onboardingBackground,
+                        )
+                        .toList(),
                   ),
                 ),
-              ),
-            ],
+                SizedBox(height: 16.h),
+                GestureDetector(
+                  onTap: controller.viewOriginalInvoice,
+                  child: Text(
+                    'View Original Invoice : ${controller.invoiceNumber.value}',
+                    style: getTextStyle(
+                      fontSize: 12.8,
+                      color: AppColors.onboardingBackground,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );

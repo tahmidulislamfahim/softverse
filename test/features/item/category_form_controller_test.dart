@@ -71,6 +71,23 @@ void main() {
       'isActive': true,
     });
   });
+
+  test('category payload includes assigned itemIds when selected', () {
+    final controller = CategoryFormController(
+      repository: _DelayedCategoryRepository(),
+    );
+    controller.nameController.text = 'Accessories';
+    controller.toggleItemSelection('item-1');
+    controller.toggleItemSelection('item-2');
+
+    expect(controller.buildPayload(), {
+      'name': 'Accessories',
+      'colorIndex': 0,
+      'shape': 'square',
+      'isActive': true,
+      'itemIds': ['item-1', 'item-2'],
+    });
+  });
 }
 
 class _DelayedCategoryRepository implements CategoryRepository {

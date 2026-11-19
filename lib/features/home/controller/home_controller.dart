@@ -37,6 +37,8 @@ class HomeController extends GetxController {
   double get orderTotal => Get.find<CheckoutController>().subtotal;
 
   final categories = <String>['All Item'].obs;
+  final _categoryIdByName = <String, String>{};
+  final _categoryNameById = <String, String>{};
   final products = <Product>[].obs;
   final tableOrders = <TableOrder>[].obs;
 
@@ -53,8 +55,23 @@ class HomeController extends GetxController {
       return products;
     }
     final selected = categories[selectedCategoryIndex.value];
+    final normalizedSelected = selected.trim().toLowerCase();
+    final selectedId = _categoryIdByName[normalizedSelected];
     return products
-        .where((product) => product.categoryName == selected)
+        .where((product) {
+          if (selectedId != null &&
+              selectedId.isNotEmpty &&
+              product.categoryId == selectedId) {
+            return true;
+          }
+          final catName =
+              product.categoryName ??
+              (product.categoryId != null
+                  ? _categoryNameById[product.categoryId]
+                  : null) ??
+              '';
+          return catName.trim().toLowerCase() == normalizedSelected;
+        })
         .toList(growable: false);
   }
 
@@ -235,15 +252,28 @@ class HomeController extends GetxController {
   }
 
   void _applyCategories(List<dynamic> data) {
-    final names =
-        data
-            .whereType<Map>()
-            .map((entry) => entry['name']?.toString())
-            .whereType<String>()
-            .where((name) => name.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
+    _categoryIdByName.clear();
+    _categoryNameById.clear();
+    final nameSet = <String>{};
+    for (final entry in data.whereType<Map>()) {
+      final id = entry['id']?.toString().trim();
+      final name = entry['name']?.toString().trim();
+      if (name != null && name.isNotEmpty) {
+        nameSet.add(name);
+        if (id != null && id.isNotEmpty) {
+          _categoryIdByName[name.toLowerCase()] = id;
+          _categoryNameById[id] = name;
+        }
+      }
+    }
+    for (final product in products) {
+      final pCat = product.categoryName?.trim();
+      if (pCat != null && pCat.isNotEmpty) {
+        nameSet.add(pCat);
+      }
+    }
+    final names = nameSet.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     categories.assignAll(['All Item', ...names]);
     if (selectedCategoryIndex.value >= categories.length) {
       selectedCategoryIndex.value = 0;
@@ -256,6 +286,32 @@ class HomeController extends GetxController {
     }).toList();
     mapped.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     products.assignAll(mapped);
+    final existingLower = categories.map((c) => c.trim().toLowerCase()).toSet();
+    final extraNames = <String>[];
+    for (final product in mapped) {
+      final catName = product.categoryName?.trim();
+      if (catName != null &&
+          catName.isNotEmpty &&
+          !existingLower.contains(catName.toLowerCase())) {
+        existingLower.add(catName.toLowerCase());
+        extraNames.add(catName);
+      }
+      if (catName != null &&
+          catName.isNotEmpty &&
+          product.categoryId != null &&
+          product.categoryId!.isNotEmpty) {
+        _categoryIdByName.putIfAbsent(
+          catName.toLowerCase(),
+          () => product.categoryId!,
+        );
+        _categoryNameById.putIfAbsent(product.categoryId!, () => catName);
+      }
+    }
+    if (extraNames.isNotEmpty) {
+      final allNames = [...categories.skip(1), ...extraNames]
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      categories.assignAll(['All Item', ...allNames]);
+    }
   }
 
   Future<void> addLocalItem(Map<String, dynamic> item) async {

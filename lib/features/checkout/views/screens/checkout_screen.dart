@@ -134,7 +134,10 @@ class CheckoutScreen extends GetView<CheckoutController> {
                   children: [
                     Icon(Iconsax.trash, color: AppColors.dangerRed, size: 20),
                     SizedBox(width: 10),
-                    Text('Clear / Discard Order', style: TextStyle(color: AppColors.dangerRed)),
+                    Text(
+                      'Clear / Discard Order',
+                      style: TextStyle(color: AppColors.dangerRed),
+                    ),
                   ],
                 ),
               ),
@@ -159,7 +162,10 @@ class CheckoutScreen extends GetView<CheckoutController> {
           children: [
             if (isDualPane)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -172,7 +178,10 @@ class CheckoutScreen extends GetView<CheckoutController> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _buildCustomerSelector(customerController, isDualPane),
+                              _buildCustomerSelector(
+                                customerController,
+                                isDualPane,
+                              ),
                               const SizedBox(height: 12),
                               _buildPurchaseItems(),
                               const SizedBox(height: 32),
@@ -188,7 +197,7 @@ class CheckoutScreen extends GetView<CheckoutController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _buildBillAndPayments(),
+                            _buildBillAndPayments(context),
                             const SizedBox(height: 120),
                           ],
                         ),
@@ -215,7 +224,7 @@ class CheckoutScreen extends GetView<CheckoutController> {
                           children: [
                             _buildPurchaseItems(),
                             SizedBox(height: 16.h),
-                            _buildBillAndPayments(),
+                            _buildBillAndPayments(context),
                             SizedBox(height: 120.h),
                           ],
                         ),
@@ -253,7 +262,10 @@ class CheckoutScreen extends GetView<CheckoutController> {
     );
   }
 
-  Widget _buildCustomerSelector(CustomerController customerController, bool isDualPane) {
+  Widget _buildCustomerSelector(
+    CustomerController customerController,
+    bool isDualPane,
+  ) {
     final selectorHeight = isDualPane ? 46.0 : 55.h;
     final btnSize = isDualPane ? 46.0 : 55.w;
     final iconSize = isDualPane ? 22.0 : 26.sp;
@@ -274,8 +286,7 @@ class CheckoutScreen extends GetView<CheckoutController> {
               final selectedId =
                   customers.any(
                     (customer) =>
-                        customer.id ==
-                        controller.selectedCustomerId.value,
+                        customer.id == controller.selectedCustomerId.value,
                   )
                   ? controller.selectedCustomerId.value
                   : '';
@@ -300,10 +311,7 @@ class CheckoutScreen extends GetView<CheckoutController> {
                     color: AppColors.chipInactiveText,
                   ),
                   items: [
-                    DropdownMenuItem(
-                      value: '',
-                      child: Text(fallbackName),
-                    ),
+                    DropdownMenuItem(value: '', child: Text(fallbackName)),
                     ...customers.map(
                       (customer) => DropdownMenuItem(
                         value: customer.id,
@@ -333,17 +341,10 @@ class CheckoutScreen extends GetView<CheckoutController> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12.r),
               gradient: const LinearGradient(
-                colors: [
-                  AppColors.gradientStart,
-                  AppColors.gradientEnd,
-                ],
+                colors: [AppColors.gradientStart, AppColors.gradientEnd],
               ),
             ),
-            child: Icon(
-              Iconsax.user_add,
-              color: Colors.white,
-              size: iconSize,
-            ),
+            child: Icon(Iconsax.user_add, color: Colors.white, size: iconSize),
           ),
         ),
       ],
@@ -397,25 +398,18 @@ class CheckoutScreen extends GetView<CheckoutController> {
           () => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (
-                var i = 0;
-                i < controller.cartItems.length;
-                i++
-              ) ...[
+              for (var i = 0; i < controller.cartItems.length; i++) ...[
                 CartItemCard(
                   item: controller.cartItems[i],
-                  onIncrement: () =>
-                      controller.incrementQuantity(i),
-                  onDecrement: () =>
-                      controller.decrementQuantity(i),
+                  onIncrement: () => controller.incrementQuantity(i),
+                  onDecrement: () => controller.decrementQuantity(i),
                   onQuantityChanged: (newQty) =>
                       controller.setItemQuantity(i, newQty),
                 ),
                 if (i == 0) ...[
                   SizedBox(height: 12.h),
                   ModifierDiscountToggle(
-                    mode:
-                        controller.priceAdjustmentMode.value,
+                    mode: controller.priceAdjustmentMode.value,
                     onModifierTap: controller.selectModifier,
                     onDiscountTap: controller.selectDiscount,
                   ),
@@ -429,7 +423,7 @@ class CheckoutScreen extends GetView<CheckoutController> {
     );
   }
 
-  Widget _buildBillAndPayments() {
+  Widget _buildBillAndPayments(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -459,30 +453,47 @@ class CheckoutScreen extends GetView<CheckoutController> {
           () => BillSummaryCard(
             subtotal: controller.subtotal,
             discount: controller.discountAmount,
-            discountLabel:
-                controller.appliedDiscount.value?.name,
+            discountLabel: controller.appliedDiscount.value?.name,
             loyaltyDiscount: controller.loyaltyDiscount,
             tax: controller.tax,
             taxRate: controller.taxRate,
             totalAmount: controller.totalAmount,
-            amountReceivedController:
-                controller.amountReceivedController,
+            amountReceivedController: controller.amountReceivedController,
             changeToReturn: controller.changeToReturn,
-            onAmountReceivedChanged:
-                controller.setAmountReceived,
+            onAmountReceivedChanged: controller.setAmountReceived,
           ),
         ),
         SizedBox(height: 22.h),
-        SizedBox(height: 16.h),
-        Text(
-          'Payment Method',
-          style: getTextStyle(
-            fontSize: 16.4,
-            fontWeight: FontWeight.w500,
-            color: AppColors.authTextDark,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Payment Method',
+              style: getTextStyle(
+                fontSize: 16.4,
+                fontWeight: FontWeight.w500,
+                color: AppColors.authTextDark,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => controller.openSplitPaymentSheet(context),
+              icon: const Icon(
+                Icons.call_split,
+                size: 18,
+                color: AppColors.onboardingBackground,
+              ),
+              label: Text(
+                'Split Payment',
+                style: getTextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.onboardingBackground,
+                ),
+              ),
+            ),
+          ],
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 8.h),
         Obx(() {
           final methods = controller.visiblePaymentMethods;
           return PaymentMethodGrid(
@@ -494,12 +505,20 @@ class CheckoutScreen extends GetView<CheckoutController> {
         SizedBox(height: 20.h),
         Obx(() {
           final methodKey = controller.selectedPaymentMethod.value;
-          final method = controller.visiblePaymentMethods.firstWhereOrNull((m) => m.key == methodKey) ??
-              (controller.visiblePaymentMethods.isNotEmpty ? controller.visiblePaymentMethods.first : null);
+          final method =
+              controller.visiblePaymentMethods.firstWhereOrNull(
+                (m) => m.key == methodKey,
+              ) ??
+              (controller.visiblePaymentMethods.isNotEmpty
+                  ? controller.visiblePaymentMethods.first
+                  : null);
           return PrimaryButton(
-            label: 'Charge ${AppHelperFunctions.formatCurrency(controller.totalAmount)}',
+            label:
+                'Charge ${AppHelperFunctions.formatCurrency(controller.totalAmount)}',
             onPressed: () {
-              if (method != null) {
+              if (controller.hasSplitPayments) {
+                controller.submitSplitCheckout();
+              } else if (method != null) {
                 controller.selectPaymentMethod(method);
               }
             },

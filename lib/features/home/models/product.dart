@@ -49,6 +49,9 @@ class Product {
     final representation = json['representation'] is Map
         ? Map<String, dynamic>.from(json['representation'] as Map)
         : <String, dynamic>{};
+    final category = json['category'] is Map
+        ? Map<String, dynamic>.from(json['category'] as Map)
+        : <String, dynamic>{};
     final imageUrl = (json['imageUrl'] ?? representation['imageUrl'])
         ?.toString();
     final trackStock = json.containsKey('trackStock')
@@ -56,8 +59,8 @@ class Product {
         : inventory['trackStock'] == true;
     return Product(
       id: json['id']?.toString(),
-      categoryId: json['categoryId']?.toString(),
-      categoryName: json['categoryName']?.toString(),
+      categoryId: (json['categoryId'] ?? category['id'])?.toString(),
+      categoryName: (json['categoryName'] ?? category['name'])?.toString(),
       name: json['name']?.toString() ?? 'Unnamed Item',
       sku: json['sku']?.toString() ?? '',
       barcode: json['barcode']?.toString() ?? '',

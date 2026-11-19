@@ -52,6 +52,7 @@ class CheckoutController extends GetxController {
   final priceAdjustmentMode = PriceAdjustmentMode.modifier.obs;
   final amountReceived = 0.0.obs;
   final selectedPaymentMethod = 'cash'.obs;
+  final splitPayments = <SplitPaymentEntry>[].obs;
   final isSubmittingCheckout = false.obs;
   final amountEditedManually = false.obs;
   final orders = <Map<String, dynamic>>[].obs;
@@ -70,6 +71,7 @@ class CheckoutController extends GetxController {
     PaymentMethod(
       key: 'cash',
       label: 'Cash',
+      parentMethod: 'cash',
       icon: Iconsax.money,
       gradientStart: AppColors.completeBadgeStart,
       gradientEnd: AppColors.completeBadgeEnd,
@@ -77,6 +79,7 @@ class CheckoutController extends GetxController {
     PaymentMethod(
       key: 'card',
       label: 'Card',
+      parentMethod: 'card',
       icon: Iconsax.card,
       gradientStart: AppColors.ongoingBadgeStart,
       gradientEnd: AppColors.ongoingBadgeEnd,
@@ -84,28 +87,35 @@ class CheckoutController extends GetxController {
     PaymentMethod(
       key: 'due',
       label: 'Due',
+      parentMethod: 'due',
       icon: Iconsax.dollar_circle,
       gradientStart: AppColors.dueStart,
       gradientEnd: AppColors.dueEnd,
-    ),
-    PaymentMethod(
-      key: 'installment',
-      label: 'Installment',
-      icon: Iconsax.truck,
-      gradientStart: AppColors.installmentStart,
-      gradientEnd: AppColors.installmentEnd,
     ),
   ];
 
   final paymentMethods = <PaymentMethod>[..._defaultPaymentMethods].obs;
 
   List<PaymentMethod> get visiblePaymentMethods => paymentMethods
-      .where((method) => _isPaymentMethodEnabled(method.key))
+      .where(
+        (method) =>
+            _isPaymentMethodEnabled(method.key) &&
+            _isPaymentMethodEnabled(method.parentMethod),
+      )
       .toList();
 
-  bool _isPaymentMethodEnabled(String key) => switch (key) {
+  List<PaymentMethod> get splittablePaymentMethods => visiblePaymentMethods
+      .where((method) => method.parentMethod != 'due' && method.key != 'due')
+      .toList();
+
+  bool get hasSplitPayments => splitPayments.isNotEmpty;
+
+  double get splitPaymentsTotal =>
+      splitPayments.fold(0.0, (sum, entry) => sum + entry.amount);
+
+  bool _isPaymentMethodEnabled(String key) => switch (key.toLowerCase()) {
     'due' => FeatureSettings.isEnabled('credit_sales'),
-    'installment' => FeatureSettings.isEnabled('payment_in_installments'),
+    'installment' => false,
     _ => true,
   };
 
@@ -230,8 +240,6 @@ class CheckoutController extends GetxController {
 
   void decrementQuantity(int index) {
     if (cartItems[index].quantity <= 1) {
-      // Decrementing an item already at 1 means "take it out of the cart" -
-      // there was previously no way to remove a line item at all once added.
       cartItems.removeAt(index);
       _syncAmountReceivedWithTotal();
       _syncCds();
@@ -431,11 +439,9 @@ class CheckoutController extends GetxController {
     await _submitCheckout(saveOrder: true);
   }
 
-  /// [silent] skips notifying the customer display — used right after a
-  /// successful checkout, where the display should keep showing the final
-  /// receipt (via [_cdsCartSender.complete]) instead of snapping to empty.
   void clearOrder({bool silent = false}) {
     cartItems.clear();
+    splitPayments.clear();
     activeOrderId.value = null;
     activeOrderNumber.value = '';
     activeTableId.value = null;
@@ -451,13 +457,6 @@ class CheckoutController extends GetxController {
     }
   }
 
-  /// The "Clear Order" button's handler. Unlike [clearOrder] (used
-  /// internally after a checkout already succeeded), this is the
-  /// user explicitly abandoning whatever order is currently loaded - if
-  /// that order already exists on the server (reopened via
-  /// [loadOrderForCheckout], or sent to a table earlier in this session),
-  /// delete it there too instead of just resetting local state and leaving
-  /// it (and the table it occupies) stuck forever.
   Future<void> discardActiveOrder() async {
     final id = activeOrderId.value;
     if (id != null) {
@@ -473,8 +472,105 @@ class CheckoutController extends GetxController {
     clearOrder();
   }
 
+  void clearSplitPayments() {
+    splitPayments.clear();
+    _syncAmountReceivedWithTotal(force: true);
+  }
+
+  Future<void> openSplitPaymentSheet(BuildContext context) async {
+    if (cartItems.isEmpty || totalAmount <= 0) {
+      AppHelperFunctions.showWarningSnackBar(
+        'Add items to the order before splitting payment.',
+      );
+      return;
+    }
+    final methods = splittablePaymentMethods;
+    if (methods.isEmpty) {
+      AppHelperFunctions.showWarningSnackBar(
+        'No payment methods available for split payment.',
+      );
+      return;
+    }
+
+    final initialSplits = splitPayments.isNotEmpty
+        ? splitPayments.toList()
+        : <SplitPaymentEntry>[
+            SplitPaymentEntry(
+              methodKey: methods.first.key,
+              parentMethod: methods.first.parentMethod,
+              label: methods.first.label,
+              subMethod: methods.first.subMethod,
+              amount: _money(totalAmount / 2),
+            ),
+            SplitPaymentEntry(
+              methodKey: methods.length > 1
+                  ? methods[1].key
+                  : methods.first.key,
+              parentMethod: methods.length > 1
+                  ? methods[1].parentMethod
+                  : methods.first.parentMethod,
+              label: methods.length > 1
+                  ? methods[1].label
+                  : methods.first.label,
+              subMethod: methods.length > 1
+                  ? methods[1].subMethod
+                  : methods.first.subMethod,
+              amount: _money(totalAmount - _money(totalAmount / 2)),
+            ),
+          ];
+
+    final result = await showModalBottomSheet<List<SplitPaymentEntry>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => _SplitPaymentSheet(
+        totalAmount: _money(totalAmount),
+        availableMethods: methods,
+        initialSplits: initialSplits,
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      splitPayments.assignAll(result);
+      final totalPaid = result.fold(0.0, (sum, item) => sum + item.amount);
+      amountEditedManually.value = true;
+      amountReceived.value = _money(totalPaid);
+      amountReceivedController.text = AppHelperFunctions.getFormattedMoney(
+        amountReceived.value,
+      );
+      await submitSplitCheckout();
+    }
+  }
+
+  Future<void> submitSplitCheckout() async {
+    if (splitPayments.isEmpty) return;
+    if (splitPaymentsTotal + 0.005 < totalAmount) {
+      AppHelperFunctions.showWarningSnackBar(
+        'Split payment amounts must cover the total amount.',
+      );
+      return;
+    }
+    TableOrder? paymentTable;
+    if (isTableOptionsEnabled && activeTableId.value == null) {
+      paymentTable = await _selectAvailableTable();
+      if (paymentTable == null) return;
+    }
+    await _submitCheckout(
+      tableId: paymentTable?.tableId ?? activeTableId.value,
+      tableName: paymentTable?.tableName ?? activeTableName.value,
+    );
+  }
+
   Future<void> selectPaymentMethod(PaymentMethod method) async {
-    if (!_isPaymentMethodEnabled(method.key)) return;
+    if (!_isPaymentMethodEnabled(method.key) ||
+        !_isPaymentMethodEnabled(method.parentMethod)) {
+      return;
+    }
+
+    splitPayments.clear();
 
     TableOrder? paymentTable;
     if (isTableOptionsEnabled && activeTableId.value == null) {
@@ -483,7 +579,7 @@ class CheckoutController extends GetxController {
     }
 
     selectedPaymentMethod.value = method.key;
-    if (method.key != 'due') {
+    if (method.parentMethod != 'due' && method.key != 'due') {
       await _submitCheckout(
         tableId: paymentTable?.tableId ?? activeTableId.value,
         tableName: paymentTable?.tableName ?? activeTableName.value,
@@ -533,6 +629,7 @@ class CheckoutController extends GetxController {
     if (Get.isRegistered<SyncService>()) {
       await Get.find<SyncService>().syncPendingActions();
     }
+    await fetchPaymentTypes();
     await fetchOrders();
     AppHelperFunctions.showSuccessSnackBar('Synced');
   }
@@ -554,21 +651,119 @@ class CheckoutController extends GetxController {
   }
 
   Future<void> fetchPaymentTypes() async {
-    final response = await _networkCaller.getRequest(ApiConstants.paymentTypes);
-    if (!response.isSuccess || response.responseData is! List) return;
+    final storeId = StorageService.storeId;
+    final url = storeId == null || storeId.isEmpty
+        ? ApiConstants.paymentTypes
+        : '${ApiConstants.paymentTypes}?storeId=${Uri.encodeQueryComponent(storeId)}';
+    final response = await _networkCaller.getRequest(url);
+    if (!response.isSuccess) return;
 
-    final methods = List<dynamic>.from(response.responseData as List)
-        .whereType<Map>()
-        .where((entry) => entry['available'] == true)
-        .map(_paymentMethodFromJson)
-        .whereType<PaymentMethod>()
-        .toList();
-    if (methods.isNotEmpty) {
-      paymentMethods.assignAll(methods);
-      if (!methods.any((method) => method.key == selectedPaymentMethod.value)) {
-        selectedPaymentMethod.value = methods.first.key;
+    final rawList = response.responseData is List
+        ? List<dynamic>.from(response.responseData as List)
+        : response.responseData is Map
+        ? List<dynamic>.from(
+            (response.responseData as Map)['paymentTypes'] as List? ??
+                (response.responseData as Map)['items'] as List? ??
+                const [],
+          )
+        : const <dynamic>[];
+    if (rawList.isEmpty) return;
+
+    final parsed = <PaymentMethod>[];
+    final seenKeys = <String>{};
+
+    for (final entry in rawList.whereType<Map>()) {
+      final isEnabled =
+          (entry['available'] ?? entry['isActive'] ?? entry['enabled'] ?? true) ==
+          true;
+      if (!isEnabled) continue;
+
+      final expanded = _expandPaymentMethodsFromJson(entry);
+      for (final method in expanded) {
+        if (seenKeys.add(method.key)) {
+          parsed.add(method);
+        }
       }
     }
+
+    if (parsed.isNotEmpty) {
+      paymentMethods.assignAll(parsed);
+      if (!parsed.any((method) => method.key == selectedPaymentMethod.value)) {
+        selectedPaymentMethod.value = parsed.first.key;
+      }
+    }
+  }
+
+  List<PaymentMethod> _expandPaymentMethodsFromJson(Map<dynamic, dynamic> json) {
+    final rawKey = (json['key'] ?? json['method'] ?? json['id'])
+        ?.toString()
+        .trim();
+    final rawLabel = (json['label'] ?? json['name'] ?? rawKey)
+        ?.toString()
+        .trim();
+    if (rawKey == null || rawKey.isEmpty || rawLabel == null || rawLabel.isEmpty) {
+      return const [];
+    }
+    if (rawKey.toLowerCase() == 'installment') return const [];
+
+    final rawParent = json['parentMethod']?.toString().trim().toLowerCase();
+    if (rawParent == 'installment') return const [];
+
+    final parentMethod =
+        rawParent ??
+        (rawKey.toLowerCase() == 'card'
+            ? 'card'
+            : rawKey.toLowerCase() == 'due'
+            ? 'due'
+            : 'cash');
+
+    final styleFallback =
+        _defaultPaymentMethods.firstWhereOrNull((m) => m.key == rawKey) ??
+        _defaultPaymentMethods.firstWhereOrNull(
+          (m) => m.key == parentMethod,
+        ) ??
+        _defaultPaymentMethods.first;
+
+    final rawSubMethods = json['subMethods'];
+    final subMethods = rawSubMethods is List
+        ? rawSubMethods
+              .map((e) => e?.toString().trim() ?? '')
+              .where((s) => s.isNotEmpty)
+              .toList()
+        : <String>[];
+
+    final isCustomSub =
+        rawKey != 'cash' && rawKey != 'card' && rawKey != 'due';
+    final result = <PaymentMethod>[
+      PaymentMethod(
+        key: rawKey,
+        label: rawLabel,
+        parentMethod: parentMethod,
+        subMethod: isCustomSub ? rawLabel : null,
+        subMethods: subMethods,
+        icon: styleFallback.icon,
+        gradientStart: styleFallback.gradientStart,
+        gradientEnd: styleFallback.gradientEnd,
+      ),
+    ];
+
+    for (final sub in subMethods) {
+      final subKey =
+          '${rawKey}_${sub.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_')}';
+      result.add(
+        PaymentMethod(
+          key: subKey,
+          label: sub,
+          parentMethod: parentMethod,
+          subMethod: sub,
+          icon: styleFallback.icon,
+          gradientStart: styleFallback.gradientStart,
+          gradientEnd: styleFallback.gradientEnd,
+        ),
+      );
+    }
+
+    return result;
   }
 
   Future<void> fetchPendingOrders() async {
@@ -683,9 +878,6 @@ class CheckoutController extends GetxController {
     _cdsCartSender.update(_cdsCartSnapshot());
   }
 
-  /// Product images can be a local file path on this POS device (never
-  /// uploaded) or a server-relative upload path — neither loads as-is on
-  /// the CDS device, so resolve to a full URL (or drop local-only images).
   String _resolveCdsImageUrl(String imageUrl) {
     final trimmed = imageUrl.trim();
     if (trimmed.isEmpty) return '';
@@ -777,8 +969,6 @@ class CheckoutController extends GetxController {
       final order = response.responseData is Map
           ? Map<String, dynamic>.from(response.responseData as Map)
           : <String, dynamic>{};
-      // Run background refreshes, KDS broadcast, and kitchen printing non-blocking
-      // so the cashier immediately sees the invoice or confirmation.
       unawaited(() async {
         try {
           await fetchOrders();
@@ -810,7 +1000,10 @@ class CheckoutController extends GetxController {
         } catch (_) {}
         if (sendToTable || (!saveOrder && currentOrderId == null)) {
           try {
-            await _printKitchenTicketsIfEnabled(order: order, tableName: tableName);
+            await _printKitchenTicketsIfEnabled(
+              order: order,
+              tableName: tableName,
+            );
           } catch (_) {}
         }
       }());
@@ -821,11 +1014,6 @@ class CheckoutController extends GetxController {
         _openInvoice(order);
         clearOrder(silent: true);
       } else if (sendToTable) {
-        // Keep the cart open on this same order instead of wiping it — the
-        // customer may be paying right now. `activeOrderId` makes the next
-        // payment tap hit payCheckout(id) instead of creating a duplicate
-        // order. Cashiers starting a fresh walk-in sale should tap
-        // "Clear Order" first.
         activeOrderId.value = order['id']?.toString() ?? activeOrderId.value;
         activeOrderNumber.value =
             order['orderNumber']?.toString() ?? activeOrderNumber.value;
@@ -848,8 +1036,6 @@ class CheckoutController extends GetxController {
         response.statusCode != 0 &&
         response.statusCode != 408) {
       if (response.errorMessage.contains('storeId is required')) {
-        // The business now has several stores - ask which one this till
-        // sells from instead of leaving every sale stuck on this error.
         AppHelperFunctions.showWarningSnackBar('Choose a store first.');
         await Get.find<StoreController>().ensureSelected(forcePicker: true);
         return;
@@ -885,12 +1071,85 @@ class CheckoutController extends GetxController {
         .toList();
   }
 
+  Map<String, bool> _buildPaymentFlags() {
+    if (splitPayments.isNotEmpty) {
+      final hasCash = splitPayments.any((p) => p.parentMethod == 'cash');
+      final hasCard = splitPayments.any((p) => p.parentMethod == 'card');
+      return {
+        'cash': hasCash || !hasCard,
+        'card': hasCard,
+        'due': false,
+        'installment': false,
+      };
+    }
+    final selected = paymentMethods.firstWhereOrNull(
+      (m) => m.key == selectedPaymentMethod.value,
+    );
+    final parent = selected?.parentMethod ?? selectedPaymentMethod.value;
+    return {
+      'cash': parent == 'cash',
+      'card': parent == 'card',
+      'due': parent == 'due',
+      'installment': false,
+    };
+  }
+
+  List<Map<String, dynamic>> _buildBackendPaymentsArray() {
+    final targetTotal = _money(totalAmount);
+    if (targetTotal <= 0) return const [];
+
+    if (splitPayments.isNotEmpty) {
+      var remaining = targetTotal;
+      final result = <Map<String, dynamic>>[];
+      for (var i = 0; i < splitPayments.length; i++) {
+        final entry = splitPayments[i];
+        final isLast = i == splitPayments.length - 1;
+        final allocated = isLast
+            ? remaining
+            : _money(entry.amount.clamp(0, remaining).toDouble());
+        remaining = _money(
+          (remaining - allocated).clamp(0, remaining).toDouble(),
+        );
+        if (allocated <= 0) continue;
+        result.add({
+          'method': entry.parentMethod == 'card' ? 'card' : 'cash',
+          'label': entry.label,
+          if (entry.subMethod != null && entry.subMethod!.isNotEmpty)
+            'subMethod': entry.subMethod,
+          'amount': allocated,
+        });
+      }
+      return result;
+    }
+
+    final selected = paymentMethods.firstWhereOrNull(
+      (m) => m.key == selectedPaymentMethod.value,
+    );
+    if (selected != null &&
+        selected.parentMethod != 'due' &&
+        (selected.subMethod != null ||
+            (selected.key != 'cash' && selected.key != 'card'))) {
+      return [
+        {
+          'method': selected.parentMethod == 'card' ? 'card' : 'cash',
+          'label': selected.label,
+          'subMethod': selected.subMethod ?? selected.label,
+          'amount': targetTotal,
+        },
+      ];
+    }
+    return const [];
+  }
+
   Map<String, dynamic> _checkoutPayload({
     required bool sendToTable,
     required bool saveOrder,
     String? tableId,
     String? tableName,
   }) {
+    final paymentsArray = (!saveOrder && !sendToTable)
+        ? _buildBackendPaymentsArray()
+        : const <Map<String, dynamic>>[];
     return {
       'customerName': customerName.value == 'Not Registered'
           ? null
@@ -903,12 +1162,8 @@ class CheckoutController extends GetxController {
       'amountReceived': _money(amountReceived.value),
       'storeId': ?StorageService.storeId,
       'posDeviceId': ?StorageService.posDeviceId,
-      'payment': {
-        'cash': selectedPaymentMethod.value == 'cash',
-        'card': selectedPaymentMethod.value == 'card',
-        'due': selectedPaymentMethod.value == 'due',
-        'installment': selectedPaymentMethod.value == 'installment',
-      },
+      'payment': _buildPaymentFlags(),
+      if (paymentsArray.isNotEmpty) 'payments': paymentsArray,
       'saveOrder': saveOrder,
       'sendToTable': sendToTable,
       'tableId': ?tableId,
@@ -916,11 +1171,6 @@ class CheckoutController extends GetxController {
     };
   }
 
-  /// Body for `PATCH /checkout/:id` - updating an already-saved or
-  /// sent-to-table order's contents in place. Deliberately narrower than
-  /// [_checkoutPayload]: the backend's UpdateCheckoutDto only accepts these
-  /// three fields (payment/table/status don't change on a content edit),
-  /// and the global ValidationPipe rejects any extra property outright.
   Map<String, dynamic> _updateCheckoutPayload() {
     return {
       'customerName': customerName.value == 'Not Registered'
@@ -932,38 +1182,19 @@ class CheckoutController extends GetxController {
   }
 
   Map<String, dynamic> _paymentPayload({String? tableId, String? tableName}) {
+    final paymentsArray = _buildBackendPaymentsArray();
     return {
       'amountReceived': _money(amountReceived.value),
       'storeId': ?StorageService.storeId,
       'posDeviceId': ?StorageService.posDeviceId,
-      'payment': {
-        'cash': selectedPaymentMethod.value == 'cash',
-        'card': selectedPaymentMethod.value == 'card',
-        'due': selectedPaymentMethod.value == 'due',
-        'installment': selectedPaymentMethod.value == 'installment',
-      },
+      'payment': _buildPaymentFlags(),
+      if (paymentsArray.isNotEmpty) 'payments': paymentsArray,
       'tableId': ?tableId,
       'tableName': ?tableName,
     };
   }
 
   double _money(double value) => double.parse(value.toStringAsFixed(2));
-
-  PaymentMethod? _paymentMethodFromJson(Map<dynamic, dynamic> json) {
-    final key = json['method']?.toString();
-    final label = json['label']?.toString();
-    final fallback = _defaultPaymentMethods.firstWhereOrNull(
-      (method) => method.key == key,
-    );
-    if (key == null || label == null || fallback == null) return null;
-    return PaymentMethod(
-      key: key,
-      label: label,
-      icon: fallback.icon,
-      gradientStart: fallback.gradientStart,
-      gradientEnd: fallback.gradientEnd,
-    );
-  }
 
   Future<bool> loadOrderForCheckout(String orderId) async {
     final response = await _networkCaller.getRequest(
@@ -985,6 +1216,7 @@ class CheckoutController extends GetxController {
         ? 'Not Registered'
         : savedCustomerName;
     cartItems.assignAll(_cartItemsFromOrderJson(order));
+    splitPayments.clear();
     amountEditedManually.value = false;
     amountReceived.value =
         double.tryParse(order['totalAmount']?.toString() ?? '') ??
@@ -1066,6 +1298,281 @@ class CheckoutController extends GetxController {
   void onClose() {
     amountReceivedController.dispose();
     super.onClose();
+  }
+}
+
+class _SplitPaymentSheet extends StatefulWidget {
+  final double totalAmount;
+  final List<PaymentMethod> availableMethods;
+  final List<SplitPaymentEntry> initialSplits;
+
+  const _SplitPaymentSheet({
+    required this.totalAmount,
+    required this.availableMethods,
+    required this.initialSplits,
+  });
+
+  @override
+  State<_SplitPaymentSheet> createState() => _SplitPaymentSheetState();
+}
+
+class _SplitPaymentSheetState extends State<_SplitPaymentSheet> {
+  late final List<SplitPaymentEntry> _splits;
+  final List<TextEditingController> _controllers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _splits = List<SplitPaymentEntry>.from(widget.initialSplits);
+    for (final split in _splits) {
+      _controllers.add(
+        TextEditingController(
+          text: AppHelperFunctions.getFormattedMoney(split.amount),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  double get _paidTotal =>
+      _splits.fold(0.0, (sum, entry) => sum + entry.amount);
+
+  double get _remaining =>
+      double.parse((widget.totalAmount - _paidTotal).toStringAsFixed(2));
+
+  void _updateMethod(int index, String? methodKey) {
+    if (methodKey == null) return;
+    final method = widget.availableMethods.firstWhereOrNull(
+      (m) => m.key == methodKey,
+    );
+    if (method == null) return;
+    setState(() {
+      _splits[index] = _splits[index].copyWith(
+        methodKey: method.key,
+        parentMethod: method.parentMethod,
+        label: method.label,
+        subMethod: method.subMethod,
+      );
+    });
+  }
+
+  void _updateAmount(int index, String raw) {
+    final cleaned = raw.replaceAll(RegExp(r'[^0-9.]'), '');
+    final parsed = double.tryParse(cleaned) ?? 0.0;
+    setState(() {
+      _splits[index] = _splits[index].copyWith(amount: parsed);
+      // Auto-balance the last row if the user edits an earlier row in a 2-split setup
+      if (_splits.length == 2 && index == 0) {
+        final secondAmount = (widget.totalAmount - parsed)
+            .clamp(0.0, widget.totalAmount)
+            .toDouble();
+        final rounded = double.parse(secondAmount.toStringAsFixed(2));
+        _splits[1] = _splits[1].copyWith(amount: rounded);
+        _controllers[1].text = AppHelperFunctions.getFormattedMoney(rounded);
+      }
+    });
+  }
+
+  void _addSplit() {
+    final method = widget.availableMethods.first;
+    final rem = _remaining > 0 ? _remaining : 0.0;
+    setState(() {
+      _splits.add(
+        SplitPaymentEntry(
+          methodKey: method.key,
+          parentMethod: method.parentMethod,
+          label: method.label,
+          subMethod: method.subMethod,
+          amount: rem,
+        ),
+      );
+      _controllers.add(
+        TextEditingController(
+          text: AppHelperFunctions.getFormattedMoney(rem),
+        ),
+      );
+    });
+  }
+
+  void _removeSplit(int index) {
+    if (_splits.length <= 2) return;
+    setState(() {
+      _splits.removeAt(index);
+      _controllers.removeAt(index).dispose();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final canComplete = _paidTotal + 0.005 >= widget.totalAmount;
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomInset),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBorder,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Split Payment',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.authTextDark,
+                    ),
+                  ),
+                  Text(
+                    'Total: ${AppHelperFunctions.formatCurrency(widget.totalAmount)}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onboardingBackground,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              for (var i = 0; i < _splits.length; i++) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: DropdownButtonFormField<String>(
+                        initialValue:
+                            widget.availableMethods.any(
+                              (m) => m.key == _splits[i].methodKey,
+                            )
+                            ? _splits[i].methodKey
+                            : widget.availableMethods.first.key,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: 'Method ${i + 1}',
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: widget.availableMethods
+                            .map(
+                              (m) => DropdownMenuItem<String>(
+                                value: m.key,
+                                child: Text(
+                                  m.label,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) => _updateMethod(i, val),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 4,
+                      child: TextField(
+                        controller: _controllers[i],
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Amount',
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onChanged: (val) => _updateAmount(i, val),
+                      ),
+                    ),
+                    if (_splits.length > 2)
+                      IconButton(
+                        onPressed: () => _removeSplit(i),
+                        icon: const Icon(
+                          Icons.remove_circle_outline,
+                          color: AppColors.dangerRed,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: _addSplit,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Another Payment Method'),
+                ),
+              ),
+              const Divider(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _remaining > 0 ? 'Remaining Balance:' : 'Change to Return:',
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    AppHelperFunctions.formatCurrency(_remaining.abs()),
+                    style: TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w700,
+                      color: _remaining > 0
+                          ? AppColors.dangerRed
+                          : AppColors.completeBadgeEnd,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: canComplete
+                    ? () => Navigator.of(context).pop(_splits)
+                    : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.onboardingBackground,
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                child: Text(
+                  'Charge Split (${AppHelperFunctions.formatCurrency(widget.totalAmount)})',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

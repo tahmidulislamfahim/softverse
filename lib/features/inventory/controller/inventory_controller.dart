@@ -18,6 +18,8 @@ class InventoryController extends GetxController {
   final isLoading = false.obs;
 
   final categories = <String>['All Item'].obs;
+  final _categoryIdByName = <String, String>{};
+  final _categoryNameById = <String, String>{};
   final filterLabels = const ['All', 'Low Stock', 'Out', 'In Stock'];
   final _stockFilters = const [null, 'low_stock', 'out_of_stock', 'in_stock'];
   final products = <InventoryProduct>[].obs;
@@ -28,10 +30,24 @@ class InventoryController extends GetxController {
             selectedCategoryIndex.value >= categories.length
         ? null
         : categories[selectedCategoryIndex.value];
+    if (category == null) return products.toList(growable: false);
+    final normalizedSelected = category.trim().toLowerCase();
+    final selectedId = _categoryIdByName[normalizedSelected];
     return products
-        .where(
-          (product) => category == null || product.categoryName == category,
-        )
+        .where((product) {
+          if (selectedId != null &&
+              selectedId.isNotEmpty &&
+              product.categoryId == selectedId) {
+            return true;
+          }
+          final catName =
+              product.categoryName ??
+              (product.categoryId != null
+                  ? _categoryNameById[product.categoryId]
+                  : null) ??
+              '';
+          return catName.trim().toLowerCase() == normalizedSelected;
+        })
         .toList(growable: false);
   }
 
@@ -155,28 +171,57 @@ class InventoryController extends GetxController {
         .toList();
     mapped.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     products.assignAll(mapped);
-    if (categories.length == 1) {
-      _applyCategoryNames(mapped.map((product) => product.categoryName));
+    for (final product in mapped) {
+      final catName = product.categoryName?.trim();
+      if (catName != null &&
+          catName.isNotEmpty &&
+          product.categoryId != null &&
+          product.categoryId!.isNotEmpty) {
+        _categoryIdByName.putIfAbsent(
+          catName.toLowerCase(),
+          () => product.categoryId!,
+        );
+        _categoryNameById.putIfAbsent(product.categoryId!, () => catName);
+      }
     }
+    _applyCategoryNames([
+      ...categories.skip(1),
+      ...mapped.map((product) => product.categoryName),
+    ]);
   }
 
   void _applyCategories(List<dynamic> data) {
-    _applyCategoryNames(
-      data
+    _categoryIdByName.clear();
+    _categoryNameById.clear();
+    for (final entry in data.whereType<Map>()) {
+      final id = entry['id']?.toString().trim();
+      final name = entry['name']?.toString().trim();
+      if (name != null && name.isNotEmpty && id != null && id.isNotEmpty) {
+        _categoryIdByName[name.toLowerCase()] = id;
+        _categoryNameById[id] = name;
+      }
+    }
+    _applyCategoryNames([
+      ...data
           .whereType<Map>()
           .map((entry) => entry['name']?.toString())
           .whereType<String>(),
-    );
+      ...products.map((product) => product.categoryName),
+    ]);
   }
 
   void _applyCategoryNames(Iterable<String?> namesSource) {
-    final names =
-        namesSource
-            .whereType<String>()
-            .where((name) => name.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
+    final seenLower = <String>{};
+    final names = <String>[];
+    for (final raw in namesSource) {
+      final name = raw?.trim();
+      if (name != null &&
+          name.isNotEmpty &&
+          seenLower.add(name.toLowerCase())) {
+        names.add(name);
+      }
+    }
+    names.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     categories.assignAll(['All Item', ...names]);
     if (selectedCategoryIndex.value >= categories.length) {
       selectedCategoryIndex.value = 0;

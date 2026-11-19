@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
@@ -52,12 +53,17 @@ class InvoiceController extends GetxController {
   final servedBy = RxnString();
   final posName = RxnString();
   final branchName = RxnString();
+  final paymentAllocations = <Map<String, dynamic>>[].obs;
 
   final taxRate = 0.075;
   final _hasOrderData = false.obs;
-  double get refundAmount => totalAmount;
 
   final selectedRefundIndex = Rx<int?>(null);
+  final alreadyRefundedQuantities = <int, int>{}.obs;
+  final refundQuantities = <int, int>{}.obs;
+  final lastRefundedItems = <CartItem>[].obs;
+  final lastRefundTotal = 0.0.obs;
+  final refundReasonController = TextEditingController();
 
   final items = <CartItem>[
     CartItem(
@@ -90,10 +96,6 @@ class InvoiceController extends GetxController {
 
   double get tax => _hasOrderData.value ? taxValue.value : subtotal * taxRate;
 
-  /// The rate actually reflected by [subtotal]/[tax], for the "TAX (X%)"
-  /// label - not [taxRate], which is only a pre-load display estimate and
-  /// stays 7.5% forever once real (possibly zero, or a different
-  /// configured rate) order data has loaded.
   double get effectiveTaxRate => subtotal > 0 ? tax / subtotal : 0;
 
   double get totalAmount =>
@@ -105,22 +107,90 @@ class InvoiceController extends GetxController {
 
   double get amountDue => amountDueValue.value;
 
-  /// A due sale that's since been fully collected prints as paid - it used
-  /// to keep printing "Due Payment" and an amount due forever.
-  /// Due and installment sales are on credit: the rest is collected later.
+  int maxRefundableQuantity(int index) {
+    if (index < 0 || index >= items.length) return 0;
+    final purchased = items[index].quantity;
+    final already = alreadyRefundedQuantities[index] ?? 0;
+    return (purchased - already).clamp(0, purchased);
+  }
+
+  int selectedRefundQuantity(int index) => refundQuantities[index] ?? 0;
+
+  bool isItemSelectedForRefund(int index) => selectedRefundQuantity(index) > 0;
+
+  int get selectedRefundItemCount =>
+      refundQuantities.values.fold(0, (sum, qty) => sum + (qty > 0 ? qty : 0));
+
+  bool get areAllRefundableItemsSelected {
+    if (items.isEmpty) return false;
+    var hasAnyRefundable = false;
+    for (var i = 0; i < items.length; i++) {
+      final maxQty = maxRefundableQuantity(i);
+      if (maxQty > 0) {
+        hasAnyRefundable = true;
+        if (selectedRefundQuantity(i) < maxQty) return false;
+      }
+    }
+    return hasAnyRefundable;
+  }
+
+  double get refundAmount {
+    if (refundQuantities.isEmpty) return totalAmount;
+    var isFullOriginalOrder = items.isNotEmpty;
+    var selectedLinesSubtotal = 0.0;
+    for (var i = 0; i < items.length; i++) {
+      final qty = selectedRefundQuantity(i);
+      if (qty != items[i].quantity) {
+        isFullOriginalOrder = false;
+      }
+      if (qty > 0) {
+        final unitPrice = items[i].bundle?.subtotal ?? items[i].price;
+        selectedLinesSubtotal += unitPrice * qty;
+      }
+    }
+    if (selectedLinesSubtotal <= 0) return 0;
+    if (isFullOriginalOrder) return totalAmount;
+    if (subtotal <= 0) return selectedLinesSubtotal;
+    final ratio = (selectedLinesSubtotal / subtotal).clamp(0.0, 1.0);
+    return double.parse((totalAmount * ratio).toStringAsFixed(2));
+  }
+
+  List<CartItem> get displayedRefundedItems =>
+      lastRefundedItems.isNotEmpty ? lastRefundedItems : items;
+
+  double get displayedRefundTotal =>
+      lastRefundTotal.value > 0 ? lastRefundTotal.value : totalAmount;
+
   bool get _isCreditSale =>
       paymentType.value == PaymentType.due ||
       paymentType.value == PaymentType.installment;
 
-  String get _printPaymentLabel =>
-      _isCreditSale && amountDue <= 0 ? 'Paid' : paymentType.value.label;
+  String get _printPaymentLabel {
+    if (paymentAllocations.length > 1) {
+      return paymentAllocations
+          .map(
+            (p) =>
+                '${p['subMethod'] ?? p['label'] ?? p['method']}: ${AppHelperFunctions.formatCurrency(_toDouble(p['amount']))}',
+          )
+          .join(', ');
+    }
+    if (paymentAllocations.length == 1) {
+      final p = paymentAllocations.first;
+      final label = (p['subMethod'] ?? p['label'])?.toString().trim();
+      if (label != null && label.isNotEmpty) return label;
+    }
+    return _isCreditSale && amountDue <= 0 ? 'Paid' : paymentType.value.label;
+  }
 
   bool get canCollectDuePayment =>
       _isCreditSale && amountDue > 0 && !isRefunded;
 
   String get formattedDateTime {
     final dt = orderCreatedAt.value ?? DateTime.now();
-    return AppHelperFunctions.getFormattedDate(dt, format: 'dd MMM yyyy, hh:mm a');
+    return AppHelperFunctions.getFormattedDate(
+      dt,
+      format: 'dd MMM yyyy, hh:mm a',
+    );
   }
 
   void loadFromOrder(
@@ -165,28 +235,91 @@ class InvoiceController extends GetxController {
         ? PaymentType.refund
         : _paymentTypeFrom(order['paymentMethod']?.toString());
 
+    final rawPayments = order['payments'];
+    if (rawPayments is List) {
+      paymentAllocations.assignAll(
+        rawPayments
+            .whereType<Map>()
+            .map((entry) => Map<String, dynamic>.from(entry))
+            .toList(),
+      );
+    } else {
+      paymentAllocations.clear();
+    }
+
     final rawItems = order['items'] is List
         ? List<dynamic>.from(order['items'] as List)
         : <dynamic>[];
-    items.assignAll(
-      rawItems.whereType<Map>().map((entry) {
-        final item = Map<String, dynamic>.from(entry);
-        return CartItem(
+    final nextAlreadyRefunded = <int, int>{};
+    final parsedItems = <CartItem>[];
+    var idx = 0;
+    for (final entry in rawItems.whereType<Map>()) {
+      final item = Map<String, dynamic>.from(entry);
+      final qty =
+          (_toDouble(item['quantity']) == 0 ? 1 : _toDouble(item['quantity']))
+              .round();
+      final refundedQty = _toDouble(
+        item['refundedQuantity'] ?? item['refundedQty'],
+      ).round().clamp(0, qty);
+      if (refundedQty > 0) {
+        nextAlreadyRefunded[idx] = refundedQty;
+      }
+      parsedItems.add(
+        CartItem(
           itemId: item['itemId']?.toString(),
           name: item['name']?.toString() ?? 'Item',
           price: _toDouble(item['unitPrice']),
           imageUrl: item['imageUrl']?.toString() ?? '',
-          quantity:
-              (_toDouble(item['quantity']) == 0
-                      ? 1
-                      : _toDouble(item['quantity']))
-                  .round(),
-        );
-      }),
-    );
+          quantity: qty,
+        ),
+      );
+      idx++;
+    }
+    items.assignAll(parsedItems);
+    alreadyRefundedQuantities.assignAll(nextAlreadyRefunded);
+    selectAllForRefund();
   }
 
-  void selectRefundItem(int index) => selectedRefundIndex.value = index;
+  void selectRefundItem(int index) {
+    selectedRefundIndex.value = index;
+    toggleRefundItem(index);
+  }
+
+  void toggleRefundItem(int index) {
+    final current = selectedRefundQuantity(index);
+    if (current > 0) {
+      refundQuantities[index] = 0;
+    } else {
+      final maxQty = maxRefundableQuantity(index);
+      if (maxQty > 0) {
+        refundQuantities[index] = maxQty;
+      }
+    }
+    selectedRefundIndex.value = index;
+    refundQuantities.refresh();
+  }
+
+  void setRefundItemQuantity(int index, int quantity) {
+    final maxQty = maxRefundableQuantity(index);
+    refundQuantities[index] = quantity.clamp(0, maxQty);
+    selectedRefundIndex.value = index;
+    refundQuantities.refresh();
+  }
+
+  void selectAllForRefund() {
+    final next = <int, int>{};
+    for (var i = 0; i < items.length; i++) {
+      final maxQty = maxRefundableQuantity(i);
+      if (maxQty > 0) {
+        next[i] = maxQty;
+      }
+    }
+    refundQuantities.assignAll(next);
+  }
+
+  void clearRefundSelection() {
+    refundQuantities.clear();
+  }
 
   bool get isRefunded => status.value == 'refunded';
 
@@ -203,6 +336,8 @@ class InvoiceController extends GetxController {
       );
       return;
     }
+    refundReasonController.clear();
+    selectAllForRefund();
     Get.toNamed(AppRoute.getRefundScreen());
   }
 
@@ -212,9 +347,39 @@ class InvoiceController extends GetxController {
     final id = checkoutOrderId.value;
     if (id == null || id.isEmpty || isRefunding.value) return;
 
+    final refundLines = <Map<String, dynamic>>[];
+    final refundedSnapshot = <CartItem>[];
+    for (var i = 0; i < items.length; i++) {
+      final qty = selectedRefundQuantity(i);
+      if (qty > 0) {
+        refundLines.add({
+          'lineIndex': i,
+          if (items[i].itemId != null && items[i].itemId!.isNotEmpty)
+            'itemId': items[i].itemId,
+          'quantity': qty,
+        });
+        refundedSnapshot.add(items[i].copyWith(quantity: qty));
+      }
+    }
+
+    if (refundLines.isEmpty) {
+      AppHelperFunctions.showWarningSnackBar(
+        'Select at least one item to refund.',
+      );
+      return;
+    }
+
+    final snapshotTotal = refundAmount;
+    final reason = refundReasonController.text.trim();
+    final body = <String, dynamic>{
+      'items': refundLines,
+      if (reason.isNotEmpty) 'reason': reason,
+    };
+
     isRefunding.value = true;
     final response = await _networkCaller.postRequest(
       ApiConstants.refundCheckout(id),
+      body: body,
     );
     isRefunding.value = false;
 
@@ -223,6 +388,8 @@ class InvoiceController extends GetxController {
       return;
     }
 
+    lastRefundedItems.assignAll(refundedSnapshot);
+    lastRefundTotal.value = snapshotTotal;
     loadFromOrder(Map<String, dynamic>.from(response.responseData as Map));
     if (Get.isRegistered<HomeController>()) {
       await Get.find<HomeController>().fetchItems();
@@ -230,7 +397,7 @@ class InvoiceController extends GetxController {
     if (Get.isRegistered<TransactionController>()) {
       await Get.find<TransactionController>().fetchTransactions();
     }
-    AppHelperFunctions.showSuccessSnackBar('Invoice refunded.');
+    AppHelperFunctions.showSuccessSnackBar('Refund completed.');
     Get.offNamed(AppRoute.getRefundInvoiceScreen());
   }
 
@@ -385,10 +552,6 @@ class InvoiceController extends GetxController {
     }
   }
 
-  /// Generates the PDF and immediately opens the native "Save As" dialog,
-  /// without navigating anywhere — used by the download icon on the
-  /// transaction list, where jumping to the invoice screen would be an
-  /// unexpected side effect of a "download" tap.
   Future<void> exportAndDownloadPdf() async {
     if (isPreparingPdf.value) return;
 
@@ -482,5 +645,11 @@ class InvoiceController extends GetxController {
       'installment' => PaymentType.installment,
       _ => PaymentType.cash,
     };
+  }
+
+  @override
+  void onClose() {
+    refundReasonController.dispose();
+    super.onClose();
   }
 }

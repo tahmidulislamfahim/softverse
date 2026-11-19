@@ -26,10 +26,12 @@ class HttpHomeRepository implements HomeRepository {
   Future<ResponseData> fetchItems() {
     final storeId = StorageService.storeId;
     final uri = Uri.parse(ApiConstants.inventory);
+    final query = <String, String>{
+      if (storeId != null && storeId.isNotEmpty) 'storeId': storeId,
+      'limit': '1000',
+    };
     return _networkCaller.getRequest(
-      storeId == null
-          ? uri.toString()
-          : uri.replace(queryParameters: {'storeId': storeId}).toString(),
+      uri.replace(queryParameters: query).toString(),
     );
   }
 

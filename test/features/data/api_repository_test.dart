@@ -23,7 +23,7 @@ void main() {
 
     expect(network.urls, [
       'https://phase-one.test/categories',
-      'https://phase-one.test/inventory',
+      'https://phase-one.test/inventory?limit=1000',
       'https://phase-one.test/tables',
     ]);
   });
@@ -37,9 +37,9 @@ void main() {
     await repository.fetchInventory(stockStatus: 'out_of_stock');
 
     expect(network.urls, [
-      'https://phase-one.test/inventory',
-      'https://phase-one.test/inventory?stockStatus=low_stock',
-      'https://phase-one.test/inventory?stockStatus=out_of_stock',
+      'https://phase-one.test/inventory?limit=1000',
+      'https://phase-one.test/inventory?stockStatus=low_stock&limit=1000',
+      'https://phase-one.test/inventory?stockStatus=out_of_stock&limit=1000',
     ]);
   });
 
@@ -58,8 +58,8 @@ void main() {
     ).fetchInventory(stockStatus: 'low_stock');
 
     expect(network.urls, [
-      'https://phase-one.test/inventory?storeId=store-1',
-      'https://phase-one.test/inventory?storeId=store-1&stockStatus=low_stock',
+      'https://phase-one.test/inventory?storeId=store-1&limit=1000',
+      'https://phase-one.test/inventory?storeId=store-1&stockStatus=low_stock&limit=1000',
     ]);
     SharedPreferences.setMockInitialValues({});
     await StorageService.init();

@@ -2,6 +2,7 @@ import 'modifier_group.dart';
 
 class InventoryProduct {
   final String? id;
+  final String? categoryId;
   final String? categoryName;
   final String name;
   final String description;
@@ -24,6 +25,7 @@ class InventoryProduct {
 
   const InventoryProduct({
     this.id,
+    this.categoryId,
     this.categoryName,
     required this.name,
     this.description = '',
@@ -78,6 +80,9 @@ class InventoryProduct {
         : <String, dynamic>{};
     final expiration = json['expiration'] is Map
         ? Map<String, dynamic>.from(json['expiration'] as Map)
+        : <String, dynamic>{};
+    final category = json['category'] is Map
+        ? Map<String, dynamic>.from(json['category'] as Map)
         : <String, dynamic>{};
 
     Map<String, dynamic>? matchedStore;
@@ -151,7 +156,12 @@ class InventoryProduct {
 
     return InventoryProduct(
       id: json['id']?.toString() ?? fallback?.id,
-      categoryName: json['categoryName']?.toString() ?? fallback?.categoryName,
+      categoryId:
+          (json['categoryId'] ?? category['id'])?.toString() ??
+          fallback?.categoryId,
+      categoryName:
+          (json['categoryName'] ?? category['name'])?.toString() ??
+          fallback?.categoryName,
       name: json['name']?.toString() ?? fallback?.name ?? 'Unnamed Item',
       description:
           json['description']?.toString() ?? fallback?.description ?? '',
@@ -162,8 +172,7 @@ class InventoryProduct {
             '${matchedStore?['price'] ?? json['price'] ?? fallback?.price ?? 0}',
           ) ??
           0,
-      cost:
-          double.tryParse('${json['cost'] ?? fallback?.cost ?? 0}') ?? 0,
+      cost: double.tryParse('${json['cost'] ?? fallback?.cost ?? 0}') ?? 0,
       barcode: json['barcode']?.toString() ?? fallback?.barcode ?? '',
       trackStock: trackStock,
       inStock: _intFrom(inStockRaw),

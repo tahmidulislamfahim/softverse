@@ -162,31 +162,39 @@ This document tracks all mobile app items across:
 
 ---
 
-## Section D: Mobile App Features That Require Backend Fixes First
+## Section D: Mobile App Features Connected to Updated Backend Endpoints
 
-These items **depend on the Backend updates described in `BACKEND_AND_WEB_FIXES.md`**:
+### 1. [DONE] Split Payment UI at Checkout (`softverse`)
+- **Status:** [DONE]
+- **Files Modified:** `lib/features/checkout/models/payment_method.dart`, `lib/features/checkout/controller/checkout_controller.dart`, `lib/features/checkout/views/screens/checkout_screen.dart`.
+- **Implementation:** Added "Split Payment" bottom sheet on Checkout allowing cashiers to split an order across multiple active payment methods, auto-balance amounts, verify remaining balance, and submit `payments: [{ method, label, subMethod, amount }]` to `POST /checkout` and `POST /checkout/:id/pay`.
 
-### 1. [PENDING BACKEND FIRST] Split Payment UI at Checkout (`softverse`)
-- **Why Pending:** Needs Backend Split Payment DTO (`payments: [{ method, amount }]`) support on `POST /checkout` and `POST /checkout/:id/pay`.
-- **Planned Mobile Implementation:** Add "Split Payment" modal on checkout allowing cashiers to add payment rows, enter partial amounts per row, and validate balance reaches `0`.
+### 2. [DONE] Custom Payment Methods, Sub-Options & Installment Removal (`softverse`)
+- **Status:** [DONE]
+- **Files Modified:** `lib/features/checkout/models/payment_method.dart`, `lib/features/checkout/controller/checkout_controller.dart`.
+- **Implementation:** Removed `installment` from default and visible payment options; updated `fetchPaymentTypes()` to pass `storeId` and dynamically render custom payment types and `subMethods` (e.g., NatCash, Bank Transfer) returned by `GET /payment-types`.
 
-### 2. [PENDING BACKEND FIRST] Custom Payment Methods & Cash Sub-Options (`softverse`)
-- **Why Pending:** Needs Backend `/payment-types` CRUD endpoints and schema migration first.
-- **Planned Mobile Implementation:** Dynamically render all active payment methods returned by `GET /payment-types` (NatCash, MonCash, Bank Transfer) instead of hardcoding 4 methods.
+### 3. [DONE] Partial / Multi-Item Refund UI (`softverse`)
+- **Status:** [DONE]
+- **Files Modified:** `lib/features/invoice/controller/invoice_controller.dart`, `lib/features/invoice/views/screens/refund_screen.dart`, `lib/features/invoice/views/screens/refund_invoice_screen.dart`, `lib/features/invoice/widgets/invoice_item_card.dart`.
+- **Implementation:** Replaced single-item radio selection with multi-item checkboxes, Select All / Clear All toggle, per-item quantity steppers (with direct numeric input up to remaining refundable quantity), optional refund reason, and `POST /checkout/:id/refund` payload `{ items: [{ lineIndex, itemId, quantity }], reason }`.
 
-### 3. [PENDING BACKEND FIRST] Partial / Multi-Item Refund UI (`softverse`)
-- **Why Pending:** Needs Backend `POST /checkout/:id/refund` support for array of item IDs and return quantities.
-- **Planned Mobile Implementation:** Update `RefundScreen` from single-item radio selection to multi-item checkboxes with item quantity steppers.
+### 4. [DONE] Direct Item Assignment When Creating/Editing Categories (`softverse`)
+- **Status:** [DONE]
+- **Files Modified:** `lib/features/item/models/category_model.dart`, `lib/features/item/controller/category_controller.dart`, `lib/features/item/views/screens/category_form_screen.dart`.
+- **Implementation:** Added searchable multi-select "Assign Items" picker in `CategoryFormScreen` that pre-selects existing category items when editing and sends `itemIds: string[]` to `POST /categories` and `PATCH /categories/:id`.
 
-### 4. [PENDING BACKEND FIRST] Direct Item Assignment When Creating Categories (`softverse`)
-- **Why Pending:** Needs Backend `itemIds` support on `POST /categories` and `PATCH /categories/:id`.
-- **Planned Mobile Implementation:** Add multi-select product picker inside `CategoryFormScreen` and include selected `itemIds` in the payload.
+### 5. [DONE] Low Stock / Out-of-Stock Notification Preferences & Device Registration (`softverse-dash`)
+- **Status:** [DONE]
+- **Files Modified:** `lib/core/utils/constants/api_constants.dart`, `lib/core/services/storage_service.dart`, `lib/features/dashboard/data/dashboard_repository.dart`, `lib/features/dashboard/controller/dashboard_controller.dart`.
+- **Implementation:** Connected `Settings → Stock notifications` toggle to `GET/PATCH /notifications/preferences` and `POST /notifications/register-device` with persisted local preference and device ID.
 
-### 5. [PENDING BACKEND FIRST] Low Stock / Out-of-Stock Push Notifications (`softverse-dash`)
-- **Why Pending:** Needs Backend FCM trigger when stock drops below threshold, and endpoint to register device FCM tokens.
-- **Planned Mobile Implementation:** Integrate Firebase Messaging in `softverse-dash`, register device token on login/toggle, and display incoming inventory alerts.
+### 6. [DONE] Disappearing Items / Category Filtering & Pagination Fix (`softverse` & `softverse-dash`)
+- **Status:** [DONE]
+- **Files Modified:** `softverse/lib/features/home/data/home_repository.dart`, `softverse/lib/features/inventory/data/inventory_repository.dart`, `softverse/lib/features/home/models/product.dart`, `softverse/lib/features/inventory/models/inventory_product.dart`, `softverse/lib/features/home/controller/home_controller.dart`, `softverse/lib/features/inventory/controller/inventory_controller.dart`, `softverse-dash/lib/features/dashboard/data/dashboard_repository.dart`.
+- **Implementation:** Increased `GET /inventory` fetch `limit=1000` so catalogs are not truncated at 50 items, and updated POS & Inventory category filtering to match by `categoryId` as well as trimmed case-insensitive `categoryName`.
 
-### 6. [PENDING BACKEND FIRST] Checkout Speed Optimization (Backend Part)
+### 7. [DONE - FRONTEND] Checkout Speed Optimization
 - **Status:**
-  - **Frontend:** [DONE] Post-checkout tasks made asynchronous (`unawaited`) so the UI unlocks instantly.
-  - **Backend:** [PENDING BACKEND FIRST] Optimize `POST /checkout` query execution and transaction locks on the database as documented in `BACKEND_AND_WEB_FIXES.md`.
+  - **Frontend:** [DONE] Post-checkout tasks run asynchronously (`unawaited`) so the UI unlocks immediately.
+  - **Backend:** Handled by backend developer.

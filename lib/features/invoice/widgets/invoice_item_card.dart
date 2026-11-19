@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../core/common/styles/global_text_style.dart';
@@ -12,6 +13,10 @@ class InvoiceItemCard extends StatelessWidget {
   final bool selectable;
   final bool selected;
   final VoidCallback? onTap;
+  final int? refundQuantity;
+  final int? maxRefundQuantity;
+  final int alreadyRefundedQuantity;
+  final ValueChanged<int>? onRefundQuantityChanged;
 
   const InvoiceItemCard({
     super.key,
@@ -19,17 +24,73 @@ class InvoiceItemCard extends StatelessWidget {
     this.selectable = false,
     this.selected = false,
     this.onTap,
+    this.refundQuantity,
+    this.maxRefundQuantity,
+    this.alreadyRefundedQuantity = 0,
+    this.onRefundQuantityChanged,
   });
+
+  Future<void> _promptCustomRefundQty(
+    BuildContext context,
+    int currentQty,
+    int maxQty,
+  ) async {
+    if (onRefundQuantityChanged == null || maxQty <= 0) return;
+    final textController = TextEditingController(text: '$currentQty');
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Refund quantity (max $maxQty)'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: InputDecoration(
+            hintText: '1 - $maxQty',
+            border: const OutlineInputBorder(),
+          ),
+          onSubmitted: (val) => Navigator.of(ctx).pop(int.tryParse(val.trim())),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(
+              ctx,
+            ).pop(int.tryParse(textController.text.trim())),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    if (result != null) {
+      onRefundQuantityChanged!(result.clamp(0, maxQty));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final activeQty = selectable && selected && refundQuantity != null
+        ? refundQuantity!
+        : item.quantity;
+    final maxQty = maxRefundQuantity ?? item.quantity;
+    final unitPrice = item.bundle?.subtotal ?? item.price;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(
+            color: selectable && selected
+                ? AppColors.authLink
+                : AppColors.cardBorder,
+            width: selectable && selected ? 1.5 : 1,
+          ),
           gradient: const LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
@@ -42,7 +103,7 @@ class InvoiceItemCard extends StatelessWidget {
             if (selectable) ...[
               Padding(
                 padding: EdgeInsets.only(top: 2.h, right: 12.w),
-                child: _RadioCircle(selected: selected),
+                child: _CheckboxIndicator(selected: selected),
               ),
             ],
             ProductImage(imageUrl: item.imageUrl, size: 46),
@@ -65,7 +126,9 @@ class InvoiceItemCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        AppHelperFunctions.formatCurrency(item.price * item.quantity),
+                        AppHelperFunctions.formatCurrency(
+                          unitPrice * activeQty,
+                        ),
                         style: getTextStyle(
                           fontSize: 15.0,
                           fontWeight: FontWeight.w600,
@@ -82,6 +145,83 @@ class InvoiceItemCard extends StatelessWidget {
                       color: AppColors.chipInactiveText,
                     ),
                   ),
+                  if (alreadyRefundedQuantity > 0) ...[
+                    SizedBox(height: 3.h),
+                    Text(
+                      'Already refunded: $alreadyRefundedQuantity • Remaining: $maxQty',
+                      style: getTextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.dangerRed,
+                      ),
+                    ),
+                  ],
+                  if (selectable &&
+                      selected &&
+                      onRefundQuantityChanged != null &&
+                      maxQty > 0) ...[
+                    SizedBox(height: 8.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Refund Qty (of $maxQty):',
+                          style: getTextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.authTextDark,
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _StepBtn(
+                              icon: Icons.remove,
+                              onTap: () => onRefundQuantityChanged!(
+                                (activeQty - 1).clamp(0, maxQty),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => _promptCustomRefundQty(
+                                context,
+                                activeQty,
+                                maxQty,
+                              ),
+                              child: Container(
+                                margin: EdgeInsets.symmetric(horizontal: 8.w),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6.r),
+                                  border: Border.all(
+                                    color: AppColors.cardBorder,
+                                  ),
+                                ),
+                                child: Text(
+                                  '$activeQty',
+                                  style: getTextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.authTextDark,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            _StepBtn(
+                              icon: Icons.add,
+                              onTap: activeQty < maxQty
+                                  ? () => onRefundQuantityChanged!(
+                                      (activeQty + 1).clamp(0, maxQty),
+                                    )
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
                   if (item.bundle != null) ...[
                     SizedBox(height: 4.h),
                     _Row(label: item.bundle!.name, value: item.bundle!.price),
@@ -107,18 +247,42 @@ class InvoiceItemCard extends StatelessWidget {
   }
 }
 
-class _RadioCircle extends StatelessWidget {
+class _StepBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _StepBtn({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 26.w,
+        height: 26.w,
+        decoration: BoxDecoration(
+          color: enabled ? AppColors.onboardingBackground : Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(6.r),
+        ),
+        child: Icon(icon, size: 15.sp, color: Colors.white),
+      ),
+    );
+  }
+}
+
+class _CheckboxIndicator extends StatelessWidget {
   final bool selected;
 
-  const _RadioCircle({required this.selected});
+  const _CheckboxIndicator({required this.selected});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 18.w,
-      height: 18.w,
+      width: 20.w,
+      height: 20.w,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(5.r),
         border: Border.all(
           color: selected ? AppColors.authLink : AppColors.chipInactiveText,
         ),
@@ -132,16 +296,7 @@ class _RadioCircle extends StatelessWidget {
             : null,
       ),
       child: selected
-          ? Center(
-              child: Container(
-                width: 7.w,
-                height: 7.w,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            )
+          ? Icon(Icons.check, size: 14.sp, color: Colors.white)
           : null,
     );
   }
